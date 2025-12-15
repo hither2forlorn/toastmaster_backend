@@ -4,9 +4,6 @@ import { serverConfig } from './config/server.config';
 import { databaseConfig } from './config/database.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DatabaseFactory } from './database/database.factory';
-import { UserController } from './modules/user/user.controller';
-import { UserModule } from './modules/user/user.module';
-import { AuthModule } from './modules/auth/auth.module';
 import { tokenConfig } from './config/token.config';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
@@ -14,6 +11,7 @@ import { ClubModule } from './modules/club/club.module';
 import { JwtGuard } from './modules/auth/guards/jwt.guard';
 import { MeetingModule } from './modules/meeting/meeting.module';
 import { SharedModule } from './common/modules/shared.module';
+import { AgendaTemplateModule } from './modules/agenda-template/agenda-template.module';
 
 @Module({
   imports: [
@@ -30,8 +28,8 @@ import { SharedModule } from './common/modules/shared.module';
     SharedModule,
     ClubModule,
     MeetingModule,
+    AgendaTemplateModule,
   ],
-  controllers: [UserController],
   providers: [
     {
       provide: 'APP_FILTER',

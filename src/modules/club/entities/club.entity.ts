@@ -3,6 +3,7 @@ import { User } from 'src/modules/user/entities/user.entity';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { ClubMeetingFrequency } from '../enum/club-meeting-frequency.enum';
 import { ClubMember } from './club-member.entity';
+import { AgendaTemplate } from 'src/modules/agenda-template/entity/agenda-template.entity';
 
 @Entity('clubs')
 export class Club extends BaseEntity {
@@ -40,4 +41,9 @@ export class Club extends BaseEntity {
 
   @OneToMany(() => ClubMember, (member) => member.club)
   members: ClubMember[];
+
+  @OneToMany(() => AgendaTemplate, (template) => template.club, {
+    cascade: true,
+  })
+  agendaTemplates: AgendaTemplate[];
 }
