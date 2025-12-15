@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiCreatedResponse,
@@ -7,7 +7,10 @@ import {
 } from '@nestjs/swagger';
 import { CreateUserDto } from './dtos/user.dto';
 import { UserService } from './user.service';
+import { Public } from 'src/common/decorators/public.decorator';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
 
+@Public()
 @Controller('user')
 @ApiTags('User')
 export class UserController {
@@ -22,5 +25,10 @@ export class UserController {
   @Post('/register')
   registerUser(@Body() userDto: CreateUserDto) {
     return this.userService.registerUser(userDto);
+  }
+
+  @Get('/me')
+  getProfile(@GetUser('sub') userId: string) {
+    return this.userService.getProfile(userId);
   }
 }

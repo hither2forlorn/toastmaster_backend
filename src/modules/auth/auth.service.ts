@@ -9,8 +9,6 @@ import { Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { LoginUserDto } from './dtos/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
-import { tokenConfig } from 'src/config/token.config';
-import { ConfigType } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -22,7 +20,11 @@ export class AuthService {
   async login(loginDto: LoginUserDto): Promise<{ token: string }> {
     const { email, password } = loginDto;
 
-    const user = await this.userRepo.findOneBy({ email });
+    const user = await this.userRepo
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', { email })
+      .getOne();
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -52,5 +54,14 @@ export class AuthService {
     }
 
     return token;
+  }
+
+  async verifyToken(token: string): Promise<any> {
+    try {
+      const payload = await this.jwtService.verifyAsync(token);
+      return payload;
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
   }
 }

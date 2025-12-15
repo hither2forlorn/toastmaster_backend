@@ -10,6 +10,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { tokenConfig } from './config/token.config';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { ClubModule } from './modules/club/club.module';
+import { JwtGuard } from './modules/auth/guards/jwt.guard';
 
 @Module({
   imports: [
@@ -25,6 +27,7 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
     }),
     UserModule,
     AuthModule,
+    ClubModule,
   ],
   controllers: [UserController],
   providers: [
@@ -35,6 +38,10 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
     {
       provide: 'APP_INTERCEPTOR',
       useClass: ResponseInterceptor,
+    },
+    {
+      provide: 'APP_GUARD',
+      useClass: JwtGuard,
     },
   ],
 })

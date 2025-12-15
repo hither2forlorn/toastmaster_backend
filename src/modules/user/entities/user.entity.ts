@@ -1,16 +1,18 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany } from 'typeorm';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import * as bcrypt from 'bcryptjs';
+import { ClubMember } from 'src/modules/club/entities/club-member.entity';
+import { Club } from 'src/modules/club/entities/club.entity';
 
-@Entity()
+@Entity('users')
 export class User extends BaseEntity {
   @Column({ unique: true })
   email: string;
 
-  @Column({ length: 255 })
+  @Column({ length: 255, select: false })
   password: string;
 
-  @Column({ length: 100 })
+  @Column({ length: 100, name: 'full_name' })
   fullName: string;
 
   @BeforeInsert()
@@ -25,4 +27,10 @@ export class User extends BaseEntity {
   async comparePassword(password: string): Promise<boolean> {
     return await bcrypt.compare(password, this.password);
   }
+
+  @OneToMany(() => ClubMember, (membership) => membership.user)
+  memberships: ClubMember[];
+
+  @OneToMany(() => Club, (club) => club.owner)
+  ownedClubs: Club[];
 }
