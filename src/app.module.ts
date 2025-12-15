@@ -12,6 +12,8 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { ClubModule } from './modules/club/club.module';
 import { JwtGuard } from './modules/auth/guards/jwt.guard';
+import { MeetingModule } from './modules/meeting/meeting.module';
+import { SharedModule } from './common/modules/shared.module';
 
 @Module({
   imports: [
@@ -25,9 +27,9 @@ import { JwtGuard } from './modules/auth/guards/jwt.guard';
       useClass: DatabaseFactory,
       inject: [ConfigService],
     }),
-    UserModule,
-    AuthModule,
+    SharedModule,
     ClubModule,
+    MeetingModule,
   ],
   controllers: [UserController],
   providers: [

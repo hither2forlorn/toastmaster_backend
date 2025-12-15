@@ -1,0 +1,39 @@
+import { BaseEntity } from 'src/common/entities/base.entity';
+import { Club } from 'src/modules/club/entities/club.entity';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { MEETING_STATUS } from '../enum/meeting-status.enum';
+
+@Entity('meetings')
+export class Meeting extends BaseEntity {
+  @Column({ type: 'int', name: 'meeting_no' })
+  meetingNo: number;
+
+  @Column({ type: 'varchar', length: 255 })
+  theme: string;
+
+  @Column({ type: 'timestamp' })
+  date: Date;
+
+  @Column({ type: 'time' })
+  time: string;
+
+  @Column({ type: 'varchar', length: 100 })
+  venue: string;
+
+  @Column({ type: 'varchar', nullable: true, length: 999 })
+  notes: string | null;
+
+  @Column({
+    type: 'enum',
+    enum: MEETING_STATUS,
+    default: MEETING_STATUS.SCHEDULED,
+  })
+  status: MEETING_STATUS;
+
+  @Column({ name: 'club_id' })
+  clubId: string;
+
+  @ManyToOne(() => Club)
+  @JoinColumn({ name: 'club_id' })
+  club: Club;
+}

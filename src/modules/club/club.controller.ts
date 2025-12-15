@@ -23,7 +23,7 @@ import { MembershipGuard } from 'src/common/guards/membership.guard';
 import { ClubRole } from './enum/club-role.enum';
 
 @ApiBearerAuth()
-@ApiTags('Club')
+@ApiTags('Clubs')
 @Controller('club')
 export class ClubController {
   constructor(
