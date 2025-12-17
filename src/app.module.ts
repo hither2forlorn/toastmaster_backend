@@ -13,6 +13,7 @@ import { MeetingModule } from './modules/meeting/meeting.module';
 import { SharedModule } from './common/modules/shared.module';
 import { AgendaTemplateModule } from './modules/agenda-template/agenda-template.module';
 import { AgendaModule } from './modules/agenda/agenda.module';
+import { ProdDatabaseFactory } from './database/prod.database.factory';
 
 @Module({
   imports: [
@@ -23,7 +24,10 @@ import { AgendaModule } from './modules/agenda/agenda.module';
       load: [serverConfig, databaseConfig, tokenConfig],
     }),
     TypeOrmModule.forRootAsync({
-      useClass: DatabaseFactory,
+      useClass:
+        process.env.NODE_ENV === 'production'
+          ? ProdDatabaseFactory
+          : DatabaseFactory,
       inject: [ConfigService],
     }),
     SharedModule,
