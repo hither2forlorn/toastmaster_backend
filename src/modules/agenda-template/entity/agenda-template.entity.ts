@@ -11,10 +11,10 @@ export class AgendaTemplate extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, name: 'club_id' })
   clubId?: string;
 
-  @Column()
+  @Column({ name: 'is_default', default: false })
   isDefault: boolean;
 
   @ManyToOne(() => Club, (club) => club.agendaTemplates, { nullable: true })

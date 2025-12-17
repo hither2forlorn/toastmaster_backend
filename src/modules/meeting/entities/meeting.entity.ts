@@ -1,7 +1,8 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Club } from 'src/modules/club/entities/club.entity';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { MEETING_STATUS } from '../enum/meeting-status.enum';
+import { Agenda } from 'src/modules/agenda/entities/agenda.entity';
 
 @Entity('meetings')
 export class Meeting extends BaseEntity {
@@ -36,4 +37,7 @@ export class Meeting extends BaseEntity {
   @ManyToOne(() => Club)
   @JoinColumn({ name: 'club_id' })
   club: Club;
+
+  @OneToMany(() => Agenda, (agenda) => agenda.meeting, { cascade: true })
+  agendas: Agenda[];
 }

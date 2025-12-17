@@ -21,6 +21,10 @@ import { ClubMemberService } from './club-member.service';
 import { AddToClubDto, JoinClubByCodeDto } from './dtos/club-join.dto';
 import { MembershipGuard } from 'src/common/guards/membership.guard';
 import { ClubRole } from './enum/club-role.enum';
+import {
+  GetMemberRoleDto,
+  UpdateMemberRoleDto,
+} from './dtos/member-related.dto';
 
 @ApiBearerAuth()
 @ApiTags('Clubs')
@@ -30,6 +34,7 @@ export class ClubController {
     private readonly clubService: ClubService,
     private readonly clubMemberService: ClubMemberService,
   ) {}
+
   @Post('/create')
   createClub(
     @Body() createClubDto: CreateClubDto,
@@ -43,44 +48,7 @@ export class ClubController {
     return this.clubService.getUserClubs(userId);
   }
 
-  @Get('/:id')
-  getClubInfo(@Param('id') clubId: string) {
-    return this.clubService.getClubInfo(clubId);
-  }
-
-  @UseGuards(MembershipGuard)
-  @Patch('/update/:id')
-  updateClub(
-    @Body() updateClubDto: UpdateClubDto,
-    @Param('id') clubId: string,
-    @GetUser('sub') userId: string,
-    @Req() req,
-  ) {
-    if (req.clubRole !== ClubRole.OWNER && req.clubRole !== ClubRole.ADMIN) {
-      throw new UnauthorizedException(
-        'You are not authorized to update this club',
-      );
-    }
-    return this.clubService.updateClub(updateClubDto, clubId, userId);
-  }
-
-  @UseGuards(MembershipGuard)
-  @Delete('/delete/:id')
-  deleteClub(
-    @Param('id') clubId: string,
-    @GetUser('sub') userId: string,
-    @Req() req,
-  ) {
-    if (req.clubRole !== ClubRole.OWNER) {
-      throw new UnauthorizedException(
-        'You are not authorized to delete this club',
-      );
-    }
-    return this.clubService.deleteClub(clubId, userId);
-  }
-
   @Get('/all/list')
-  //search filter: todo
   getAllClubs(
     @Query('page', ParseIntPipe) page: number,
     @Query('limit', ParseIntPipe) limit: number,
@@ -91,6 +59,7 @@ export class ClubController {
   @UseGuards(MembershipGuard)
   @Get('/code')
   getJoinCode(@Query('clubId') clubId: string, @Req() req) {
+    console.log('this is clubId', clubId);
     if (!clubId) {
       throw new UnauthorizedException('Club ID is required');
     }
@@ -106,7 +75,7 @@ export class ClubController {
 
   @UseGuards(MembershipGuard)
   @Post('/code/regenerate')
-  regenerateJoinCode(@Body('clubId') clubId: string, @Req() req) {
+  regenerateJoinCode(@Query('clubId') clubId: string, @Req() req) {
     if (!clubId) {
       throw new UnauthorizedException('Club ID is required');
     }
@@ -125,14 +94,9 @@ export class ClubController {
     return this.clubService.findClubByCode(clubCode);
   }
 
-  @Get('/:id/members')
-  getClubMembers(@Param('id') clubId: string) {
-    return this.clubMemberService.getClubMembers(clubId);
-  }
-
-  @Get('/member/:memberId')
-  getMemberById(@Param('memberId') memberId: string) {
-    return this.clubMemberService.getMemberById(memberId);
+  @Get('/stats')
+  generateMemberStats(@Query('clubId') clubId: string) {
+    return this.clubMemberService.generateMemberStats(clubId);
   }
 
   @Post('/join')
@@ -146,10 +110,69 @@ export class ClubController {
     );
   }
 
+  @Get('/member/role')
+  getMemberRole(@Body() data: GetMemberRoleDto) {
+    if (!data.clubId || !data.userId) {
+      throw new UnauthorizedException(
+        'clubId and userId are required in the request body',
+      );
+    }
+    return this.clubMemberService.getMemberRole(data.clubId, data.userId);
+  }
+
   @UseGuards(MembershipGuard)
-  @Post('/:id/member/add')
+  @Patch('/member/role/update')
+  updateMemberRole(
+    @Body() { memberId, clubId, newRole }: UpdateMemberRoleDto,
+    @Req() req,
+  ) {
+    if (req.clubRole !== ClubRole.OWNER) {
+      throw new UnauthorizedException(
+        'You are not authorized to update member roles in this club',
+      );
+    }
+    return this.clubMemberService.updateRole(memberId, newRole, clubId);
+  }
+
+  @UseGuards(MembershipGuard)
+  @Patch('/update/:clubId')
+  updateClub(
+    @Body() updateClubDto: UpdateClubDto,
+    @Param('clubId') clubId: string,
+    @Req() req,
+  ) {
+    if (req.clubRole !== ClubRole.OWNER && req.clubRole !== ClubRole.ADMIN) {
+      throw new UnauthorizedException(
+        'You are not authorized to update this club',
+      );
+    }
+    return this.clubService.updateClub(updateClubDto, clubId);
+  }
+
+  @UseGuards(MembershipGuard)
+  @Delete('/delete/:clubId')
+  deleteClub(
+    @Param('clubId') clubId: string,
+    @GetUser('sub') userId: string,
+    @Req() req,
+  ) {
+    if (req.clubRole !== ClubRole.OWNER) {
+      throw new UnauthorizedException(
+        'You are not authorized to delete this club',
+      );
+    }
+    return this.clubService.deleteClub(clubId, userId);
+  }
+
+  @Get('/:clubId/members')
+  getClubMembers(@Param('clubId') clubId: string) {
+    return this.clubMemberService.getClubMembers(clubId);
+  }
+
+  @UseGuards(MembershipGuard)
+  @Post('/:clubId/member/add')
   addMemberToClub(
-    @Param('id') clubId: string,
+    @Param('clubId') clubId: string,
     @Body() body: AddToClubDto,
     @Req() req,
   ) {
@@ -162,42 +185,27 @@ export class ClubController {
   }
 
   @UseGuards(MembershipGuard)
-  @Delete('/member/remove/:memberId')
-  removeMemberFromClub(@Param('memberId') memberId: string, @Req() req) {
+  @Delete('/:clubId/member/remove/:memberId')
+  removeMemberFromClub(
+    @Param('clubId') clubId: string,
+    @Param('memberId') memberId: string,
+    @Req() req,
+  ) {
     if (req.clubRole !== ClubRole.OWNER && req.clubRole !== ClubRole.ADMIN) {
       throw new UnauthorizedException(
         'You are not authorized to remove members from this club',
       );
     }
-    return this.clubMemberService.removeMemberFromClub(memberId);
+    return this.clubMemberService.removeMemberFromClub(memberId, clubId);
   }
 
-  @Post('/member/role')
-  getMemberRole(
-    @Body('clubId') clubId: string,
-    @Body('userId') userId: string,
-  ) {
-    return this.clubMemberService.getMemberRole(clubId, userId);
+  @Get('/member/:memberId')
+  getMemberById(@Param('memberId') memberId: string) {
+    return this.clubMemberService.getMemberById(memberId);
   }
 
-  @UseGuards(MembershipGuard)
-  @Patch('/member/role/update')
-  updateMemberRole(
-    @Body('memberId') memberId: string,
-    @Body('newRole') newRole: ClubRole,
-    @Body('clubId') clubId: string,
-    @Req() req,
-  ) {
-    if (req.clubRole !== ClubRole.OWNER) {
-      throw new UnauthorizedException(
-        'You are not authorized to update member roles in this club',
-      );
-    }
-    return this.clubMemberService.updateRole(memberId, newRole, clubId);
-  }
-
-  @Get('/stats')
-  generateMemberStats(@Query('clubId') clubId: string) {
-    return this.clubMemberService.generateMemberStats(clubId);
+  @Get('/:clubId')
+  getClubInfo(@Param('clubId') clubId: string) {
+    return this.clubService.getClubInfo(clubId);
   }
 }

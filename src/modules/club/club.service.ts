@@ -56,17 +56,13 @@ export class ClubService {
     });
 
     if (!club) {
-      throw new InternalServerErrorException('Club not found');
+      throw new NotFoundException('Club not found');
     }
 
     return club;
   }
 
-  async updateClub(
-    data: UpdateClubDto,
-    clubId: string,
-    userId: string,
-  ): Promise<Club> {
+  async updateClub(data: UpdateClubDto, clubId: string): Promise<Club> {
     const club = await this.clubRepo.findOne({
       where: { id: clubId },
       relations: ['owner'],
@@ -132,7 +128,8 @@ export class ClubService {
     return clubs;
   }
 
-  async getJoinCode(clubId: string): Promise<{ code: string }> {
+  async getJoinCode(clubId: string) {
+    console.log(clubId);
     const club = await this.clubRepo.findOne({
       where: {
         id: clubId,

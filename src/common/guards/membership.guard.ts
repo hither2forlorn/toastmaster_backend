@@ -27,7 +27,7 @@ export class MembershipGuard implements CanActivate {
 
     const req = context.switchToHttp().getRequest();
     const user = req.user;
-    const club = req.params.clubId;
+    const club = req.params?.clubId || req.body?.clubId || req.query?.clubId;
 
     if (!user || !club) {
       return false;
@@ -35,9 +35,13 @@ export class MembershipGuard implements CanActivate {
 
     const profile = await this.userService.getProfile(user.sub);
 
-    const isMember = profile.member_of.some((c) => c.id === club);
-    const isAdmin = profile.admin_of.some((c) => c.id === club);
-    const isOwner = profile.owned_clubs.some((c) => c.id === club);
+    const memberOf = profile?.member_of || [];
+    const adminOf = profile?.admin_of || [];
+    const ownedClubs = profile?.owned_clubs || [];
+
+    const isMember = memberOf.some((c: { id: string }) => c.id === club);
+    const isAdmin = adminOf.some((c: { id: string }) => c.id === club);
+    const isOwner = ownedClubs.some((c: { id: string }) => c.id === club);
 
     if (!isMember && !isAdmin && !isOwner) {
       return false;

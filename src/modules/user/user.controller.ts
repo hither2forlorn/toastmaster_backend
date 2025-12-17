@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiOperation,
   ApiTags,
@@ -10,8 +11,8 @@ import { UserService } from './user.service';
 import { Public } from 'src/common/decorators/public.decorator';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 
-@Public()
 @Controller('user')
+@ApiBearerAuth()
 @ApiTags('User')
 export class UserController {
   constructor(private userService: UserService) {}
@@ -22,6 +23,7 @@ export class UserController {
   @ApiBadRequestResponse({
     description: 'User with this email already exists.',
   })
+  @Public()
   @Post('/register')
   registerUser(@Body() userDto: CreateUserDto) {
     return this.userService.registerUser(userDto);
@@ -29,6 +31,7 @@ export class UserController {
 
   @Get('/me')
   getProfile(@GetUser('sub') userId: string) {
+    console.log(userId);
     return this.userService.getProfile(userId);
   }
 }

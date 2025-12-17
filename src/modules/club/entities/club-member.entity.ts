@@ -1,10 +1,12 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, Unique } from 'typeorm';
 import { Club } from './club.entity';
 import { User } from 'src/modules/user/entities/user.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { ClubRole } from '../enum/club-role.enum';
 
 @Entity()
+@Unique(['clubId', 'memberEmail'])
+@Unique(['clubId', 'userId'])
 export class ClubMember extends BaseEntity {
   @Column({ nullable: true, name: 'user_id' })
   userId: string | null;
@@ -15,7 +17,7 @@ export class ClubMember extends BaseEntity {
   @Column({ length: 100, name: 'member_name' })
   memberName: string;
 
-  @Column({ length: 100, name: 'member_email', unique: true })
+  @Column({ length: 100, name: 'member_email' })
   memberEmail: string;
 
   @Column({

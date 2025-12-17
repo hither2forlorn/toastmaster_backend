@@ -12,6 +12,11 @@ async function server() {
   const configService = app.get(ConfigService);
   const serverConfig = configService.get<ServerConfig>(SERVER_CONFIG_KEY);
 
+  app.enableCors({
+    origin: 'http://localhost:3000',
+    credentials: true,
+  });
+
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,

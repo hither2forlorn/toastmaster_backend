@@ -12,6 +12,7 @@ import { JwtGuard } from './modules/auth/guards/jwt.guard';
 import { MeetingModule } from './modules/meeting/meeting.module';
 import { SharedModule } from './common/modules/shared.module';
 import { AgendaTemplateModule } from './modules/agenda-template/agenda-template.module';
+import { AgendaModule } from './modules/agenda/agenda.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AgendaTemplateModule } from './modules/agenda-template/agenda-template.
     ClubModule,
     MeetingModule,
     AgendaTemplateModule,
+    AgendaModule,
   ],
   providers: [
     {

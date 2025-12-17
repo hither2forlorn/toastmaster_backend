@@ -100,11 +100,16 @@ export class ClubMemberService {
     return await this.memberRepo.save(newMember);
   }
 
-  async removeMemberFromClub(memberId: string): Promise<{ message: string }> {
-    const member = await this.memberRepo.findOne({ where: { id: memberId } });
-    if (!member) throw new NotFoundException('Member not found');
+  async removeMemberFromClub(
+    memberId: string,
+    clubId: string,
+  ): Promise<{ message: string }> {
+    const member = await this.memberRepo.findOne({
+      where: { id: memberId, clubId },
+    });
+    if (!member) throw new NotFoundException('Member not found in this club');
 
-    await this.memberRepo.remove(member);
+    await this.memberRepo.delete(memberId);
     return { message: 'Member removed from club successfully' };
   }
 
@@ -126,13 +131,16 @@ export class ClubMemberService {
     clubId: string,
     userId: string,
   ): Promise<{ member: boolean; role: ClubRole | null }> {
-    const member = await this.memberRepo.findOne({
+    console.log('Getting member role for clubId:', clubId, 'userId:', userId);
+    const member = await this.memberRepo.find({
       where: { clubId, userId },
       select: ['role'],
     });
 
-    if (member) {
-      return { member: true, role: member.role };
+    console.log(member);
+
+    if (member.length > 0) {
+      return { member: true, role: member[0].role };
     }
 
     return { member: false, role: null };

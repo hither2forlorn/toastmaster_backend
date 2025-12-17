@@ -8,10 +8,15 @@ export class AgendaTemplateItem extends BaseEntity {
   @Column()
   title: string;
 
-  @Column({ type: 'enum', enum: AGENDA_ROLE })
+  @Column({
+    type: 'enum',
+    enum: AGENDA_ROLE,
+    nullable: true,
+    name: 'system_role',
+  })
   systemRole?: AGENDA_ROLE;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true, name: 'custom_role' })
   customRole?: string;
 
   @Column()

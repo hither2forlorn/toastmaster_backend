@@ -2,9 +2,9 @@ import {
   ArgumentsHost,
   Catch,
   ExceptionFilter,
-  Global,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 
 interface ErrorResponse {
@@ -16,6 +16,7 @@ interface ErrorResponse {
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(GlobalExceptionFilter.name);
   private static readonly UNEXPECTED_ERROR_MESSAGE =
     'An unexpected error occurred';
 
@@ -33,6 +34,17 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       exception instanceof HttpException
         ? exception.getResponse()
         : GlobalExceptionFilter.UNEXPECTED_ERROR_MESSAGE;
+
+    if (status >= 500) {
+      this.logger.error(
+        `${request.method} ${request.url} - ${status}`,
+        exception instanceof Error ? exception.stack : String(exception),
+      );
+    } else {
+      this.logger.warn(
+        `${request.method} ${request.url} - ${status} - ${JSON.stringify(message)}`,
+      );
+    }
 
     response.status(status).json({
       status,

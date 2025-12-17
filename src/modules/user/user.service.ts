@@ -39,39 +39,41 @@ export class UserService {
         'user.email',
         'user.fullName',
         `COALESCE(
-          JSON_AGG(
-            DISTINCT CASE WHEN  membership.role = 'MEMBER'
-              THEN JSON_BUILD_OBJECT(
-                'id', club.id,
-                'name', club.name
+          JSONB_AGG(
+            DISTINCT CASE WHEN "membership"."role" = 'MEMBER' AND "club"."id" IS NOT NULL
+              THEN JSONB_BUILD_OBJECT(
+                'id', "club"."id",
+                'name', "club"."name"
               )
             END
-            ), '[]'
+          ) FILTER (WHERE "membership"."role" = 'MEMBER' AND "club"."id" IS NOT NULL), '[]'
         ) AS member_of`,
         `COALESCE(
-          JSON_AGG(
-            DISTINCT CASE WHEN membership.role = 'ADMIN'
-              THEN JSON_BUILD_OBJECT(
-                'id', club.id,
-                'name', club.name
-                )
-              END
-              ), '[]'
+          JSONB_AGG(
+            DISTINCT CASE WHEN "membership"."role" = 'ADMIN' AND "club"."id" IS NOT NULL
+              THEN JSONB_BUILD_OBJECT(
+                'id', "club"."id",
+                'name', "club"."name"
+              )
+            END
+          ) FILTER (WHERE "membership"."role" = 'ADMIN' AND "club"."id" IS NOT NULL), '[]'
         ) AS admin_of`,
         `COALESCE(
-          JSON_AGG(
-            DISTINCT JSON_BUILD_OBJECT(
-              'id', ownedClub.id,
-              'name', ownedClub.name,
-              'clubCode', ownedClub.clubCode
+          JSONB_AGG(
+            DISTINCT JSONB_BUILD_OBJECT(
+              'id', "ownedClub"."id",
+              'name', "ownedClub"."name",
+              'clubCode', "ownedClub"."club_code"
             )
-          ), '[]'
-        ) AS owner_of`,
+          ) FILTER (WHERE "ownedClub"."id" IS NOT NULL), '[]'
+        ) AS owned_clubs`,
       ])
       .where('user.id = :userId', { userId })
       .groupBy('user.id')
       .getRawOne();
 
-    return JSON.parse(JSON.stringify(user));
+    return user
+      ? JSON.parse(JSON.stringify(user))
+      : { member_of: [], admin_of: [], owned_clubs: [] };
   }
 }
