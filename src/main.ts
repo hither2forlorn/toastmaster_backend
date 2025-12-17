@@ -29,7 +29,7 @@ async function server() {
 
   setupSwagger(app);
 
-  await app.listen(serverConfig!.port);
+  await app.listen(serverConfig!.port, serverConfig!.host);
 }
 
 server();
