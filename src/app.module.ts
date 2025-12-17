@@ -4,6 +4,7 @@ import { serverConfig } from './config/server.config';
 import { databaseConfig } from './config/database.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DatabaseFactory } from './database/database.factory';
+import { DatabaseProductionFactory } from './database/database-production.factory';
 import { tokenConfig } from './config/token.config';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
@@ -14,16 +15,18 @@ import { SharedModule } from './common/modules/shared.module';
 import { AgendaTemplateModule } from './modules/agenda-template/agenda-template.module';
 import { AgendaModule } from './modules/agenda/agenda.module';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: isProduction ? '.env.production' : '.env',
       cache: true,
       load: [serverConfig, databaseConfig, tokenConfig],
     }),
     TypeOrmModule.forRootAsync({
-      useClass: DatabaseFactory,
+      useClass: isProduction ? DatabaseProductionFactory : DatabaseFactory,
       inject: [ConfigService],
     }),
     SharedModule,
