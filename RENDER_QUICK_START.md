@@ -34,6 +34,7 @@ DATABASE_URL=postgresql://postgres.xxx:password@...pooler.supabase.com:6543/post
 NODE_ENV=production
 PORT=10000
 API_PREFIX=/api
+CORS_ORIGIN=https://your-frontend.vercel.app,http://localhost:3000
 JWT_SECRET=<run: openssl rand -base64 32>
 JWT_EXPIRES_IN=7d
 JWT_ALGORITHM=HS256

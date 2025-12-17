@@ -7,6 +7,7 @@ export interface ServerConfig {
   host: string;
   apiPrefix: string;
   swaggerPath: string;
+  corsOrigin: string[];
 }
 
 export const serverConfig = registerAs<ServerConfig>(SERVER_CONFIG_KEY, () => ({
@@ -14,4 +15,7 @@ export const serverConfig = registerAs<ServerConfig>(SERVER_CONFIG_KEY, () => ({
   host: process.env.HOST || 'localhost',
   apiPrefix: process.env.API_PREFIX || 'api',
   swaggerPath: process.env.SWAGGER_PATH || '/api/docs',
+  corsOrigin: process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',')
+    : ['http://localhost:3000'],
 }));

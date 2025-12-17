@@ -13,7 +13,7 @@ async function server() {
   const serverConfig = configService.get<ServerConfig>(SERVER_CONFIG_KEY);
 
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: serverConfig!.corsOrigin,
     credentials: true,
   });
 
