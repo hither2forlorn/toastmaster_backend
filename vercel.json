@@ -2,23 +2,34 @@
   "version": 2,
   "builds": [
     {
+<<<<<<< HEAD
       "src": "dist/main.js",
+=======
+      "src": "dist/serverless.js",
+>>>>>>> 776a8e28515124a720143cb9c9049de7c5bfdaf9
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
+<<<<<<< HEAD
       "dest": "dist/main.js"
+=======
+      "dest": "dist/serverless.js"
+>>>>>>> 776a8e28515124a720143cb9c9049de7c5bfdaf9
     }
   ],
   "env": {
     "NODE_ENV": "production"
+<<<<<<< HEAD
   },
   "functions": {
     "dist/main.js": {
       "memory": 1024,
       "maxDuration": 10
     }
+=======
+>>>>>>> 776a8e28515124a720143cb9c9049de7c5bfdaf9
   }
 }

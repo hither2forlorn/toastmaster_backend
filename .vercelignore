@@ -1,5 +1,6 @@
 node_modules
 .env
+<<<<<<< HEAD
 .env.local
 .git
 .vscode
@@ -7,3 +8,14 @@ test
 coverage
 *.log
 .DS_Store
+=======
+.env.*
+*.log
+.git
+.idea
+.vscode
+coverage
+test
+*.test.ts
+*.spec.ts
+>>>>>>> 776a8e28515124a720143cb9c9049de7c5bfdaf9
