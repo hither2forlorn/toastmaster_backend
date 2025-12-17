@@ -14,7 +14,6 @@ import { MeetingModule } from './modules/meeting/meeting.module';
 import { SharedModule } from './common/modules/shared.module';
 import { AgendaTemplateModule } from './modules/agenda-template/agenda-template.module';
 import { AgendaModule } from './modules/agenda/agenda.module';
-import { ProdDatabaseFactory } from './database/prod.database.factory';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -27,14 +26,7 @@ const isProduction = process.env.NODE_ENV === 'production';
       load: [serverConfig, databaseConfig, tokenConfig],
     }),
     TypeOrmModule.forRootAsync({
-<<<<<<< HEAD
       useClass: isProduction ? DatabaseProductionFactory : DatabaseFactory,
-=======
-      useClass:
-        process.env.NODE_ENV === 'production'
-          ? ProdDatabaseFactory
-          : DatabaseFactory,
->>>>>>> 776a8e28515124a720143cb9c9049de7c5bfdaf9
       inject: [ConfigService],
     }),
     SharedModule,
