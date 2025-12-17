@@ -11,5 +11,8 @@
       "src": "/(.*)",
       "dest": "dist/serverless.js"
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
