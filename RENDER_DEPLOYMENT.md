@@ -1,6 +1,7 @@
 # 🚀 Render Deployment Guide - Toastmaster Backend
 
 ## Prerequisites
+
 - ✅ Supabase account with database created
 - ✅ GitHub repository ready
 - ✅ Render account (free tier works!)
@@ -10,6 +11,7 @@
 ## Step 1: Prepare Supabase Database (5 minutes)
 
 ### 1.1 Get Your Connection String
+
 1. Go to your Supabase project: https://supabase.com/dashboard
 2. Click **Project Settings** (gear icon) → **Database**
 3. Scroll to **Connection string** section
@@ -26,6 +28,7 @@
      - `&` → `%26`
 
 ### 1.2 Run Database Schema
+
 1. In Supabase Dashboard, go to **SQL Editor**
 2. Click **New Query**
 3. Copy and paste this schema:
@@ -141,25 +144,28 @@ git push origin main
 ## Step 3: Create Render Web Service (5 minutes)
 
 ### 3.1 Create New Web Service
+
 1. Go to https://dashboard.render.com
 2. Click **New +** → **Web Service**
 3. Connect your GitHub repository `toastmaster_backend`
 4. Click **Connect**
 
 ### 3.2 Configure Build Settings
+
 Fill in these details:
 
-| Field | Value |
-|-------|-------|
-| **Name** | `toastmaster-api` (or your choice) |
-| **Region** | Choose closest to your Supabase region |
-| **Branch** | `main` |
-| **Root Directory** | Leave empty |
-| **Runtime** | `Node` |
-| **Build Command** | `npm install && npm run build` |
-| **Start Command** | `NODE_ENV=production node dist/main` |
+| Field              | Value                                  |
+| ------------------ | -------------------------------------- |
+| **Name**           | `toastmaster-api` (or your choice)     |
+| **Region**         | Choose closest to your Supabase region |
+| **Branch**         | `main`                                 |
+| **Root Directory** | Leave empty                            |
+| **Runtime**        | `Node`                                 |
+| **Build Command**  | `npm install && npm run build`         |
+| **Start Command**  | `NODE_ENV=production node dist/main`   |
 
 ### 3.3 Select Instance Type
+
 - **Free** tier works for testing
 - **Starter** ($7/month) recommended for production
 
@@ -171,24 +177,28 @@ Scroll down to **Environment Variables** section and add these:
 
 ### Required Variables:
 
-| Key | Value | Notes |
-|-----|-------|-------|
-| `DATABASE_URL` | Your Supabase connection string | From Step 1.1 |
-| `NODE_ENV` | `production` | Critical! |
-| `PORT` | `10000` | Render's default |
-| `API_PREFIX` | `/api` | API route prefix |
-| `JWT_SECRET` | Generate secure secret | See below |
-| `JWT_EXPIRES_IN` | `7d` | Token expiry |
-| `JWT_ALGORITHM` | `HS256` | JWT algorithm |
+| Key              | Value                           | Notes            |
+| ---------------- | ------------------------------- | ---------------- |
+| `DATABASE_URL`   | Your Supabase connection string | From Step 1.1    |
+| `NODE_ENV`       | `production`                    | Critical!        |
+| `PORT`           | `10000`                         | Render's default |
+| `API_PREFIX`     | `/api`                          | API route prefix |
+| `JWT_SECRET`     | Generate secure secret          | See below        |
+| `JWT_EXPIRES_IN` | `7d`                            | Token expiry     |
+| `JWT_ALGORITHM`  | `HS256`                         | JWT algorithm    |
 
 ### Generate JWT_SECRET:
+
 Run this in your terminal:
+
 ```bash
 openssl rand -base64 32
 ```
+
 Copy the output (e.g., `xK9mP2vN4bQ8rT5wY7zL1aS3dF6gH9jK`) and use it as `JWT_SECRET`
 
 ### Example DATABASE_URL:
+
 ```
 postgresql://postgres.ahrunadgrvyrmvhhxokt:MyPass123@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true
 ```
@@ -212,6 +222,7 @@ postgresql://postgres.ahrunadgrvyrmvhhxokt:MyPass123@aws-0-ap-south-1.pooler.sup
 ## Step 6: Test Your API (2 minutes)
 
 Once deployed, Render gives you a URL like:
+
 ```
 https://toastmaster-api.onrender.com
 ```
@@ -219,11 +230,13 @@ https://toastmaster-api.onrender.com
 ### Test Endpoints:
 
 #### Health Check:
+
 ```bash
 curl https://toastmaster-api.onrender.com/api
 ```
 
 Expected response:
+
 ```json
 {
   "message": "Welcome to Toastmaster API",
@@ -232,7 +245,9 @@ Expected response:
 ```
 
 #### Swagger Documentation:
+
 Open in browser:
+
 ```
 https://toastmaster-api.onrender.com/api/docs
 ```
@@ -240,6 +255,7 @@ https://toastmaster-api.onrender.com/api/docs
 You should see Swagger UI with all endpoints!
 
 #### Test User Registration:
+
 ```bash
 curl -X POST https://toastmaster-api.onrender.com/api/auth/register \
   -H "Content-Type: application/json" \
@@ -267,7 +283,9 @@ curl -X POST https://toastmaster-api.onrender.com/api/auth/register \
 ## 🔧 Troubleshooting
 
 ### Build Fails
+
 **Check Render Logs** (Logs tab in dashboard):
+
 ```
 Common issues:
 - Missing dependencies → Check package.json
@@ -276,6 +294,7 @@ Common issues:
 ```
 
 ### Database Connection Fails
+
 ```bash
 Error: "unable to connect to database"
 
@@ -288,6 +307,7 @@ Solutions:
 ```
 
 ### App Crashes on Start
+
 ```bash
 Check Render logs for:
 - Missing environment variables
@@ -296,6 +316,7 @@ Check Render logs for:
 ```
 
 ### 503 Service Unavailable
+
 ```
 Free tier Render services spin down after 15 min of inactivity.
 First request after inactivity takes 30-60 seconds to spin up.
@@ -326,14 +347,12 @@ git push origin main
 ## 🚀 Post-Deployment
 
 ### Update CORS for Frontend
+
 When you have a frontend, update CORS in `src/main.ts`:
 
 ```typescript
 app.enableCors({
-  origin: [
-    'https://your-frontend.vercel.app',
-    'http://localhost:3000',
-  ],
+  origin: ['https://your-frontend.vercel.app', 'http://localhost:3000'],
   credentials: true,
 });
 ```
@@ -341,6 +360,7 @@ app.enableCors({
 Then commit and push to redeploy.
 
 ### Custom Domain (Optional)
+
 1. Go to Render dashboard → Your service
 2. Click **Settings** → **Custom Domain**
 3. Add your domain (e.g., `api.yourapp.com`)
@@ -352,11 +372,13 @@ Then commit and push to redeploy.
 ## 📊 Monitoring
 
 ### View Logs
+
 1. Go to your service in Render
 2. Click **Logs** tab
 3. Watch real-time logs or filter by date
 
 ### Metrics
+
 1. Click **Metrics** tab
 2. View:
    - CPU usage
