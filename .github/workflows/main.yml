@@ -12,4 +12,4 @@ jobs:
     steps:
       - name: Ping Render service
         run: |
-          curl -s -o /dev/null -w "%{http_code}\n" https://YOUR-APP.onrender.com/api/health
+          curl -s -o /dev/null -w "%{http_code}\n" https://toastmaster-backend.onrender.com/api/health
