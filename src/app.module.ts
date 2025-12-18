@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ScheduleModule } from '@nestjs/schedule';
 import { serverConfig } from './config/server.config';
 import { databaseConfig } from './config/database.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -27,7 +26,6 @@ const isProduction = process.env.NODE_ENV === 'production';
       cache: true,
       load: [serverConfig, databaseConfig, tokenConfig],
     }),
-    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       useClass: isProduction ? DatabaseProductionFactory : DatabaseFactory,
       inject: [ConfigService],
