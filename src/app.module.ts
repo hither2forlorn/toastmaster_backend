@@ -23,11 +23,11 @@ const isProduction = process.env.NODE_ENV === 'production';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: isProduction ? undefined : '.env', // Use system env vars in production
+      envFilePath: isProduction ? undefined : '.env',
       cache: true,
       load: [serverConfig, databaseConfig, tokenConfig],
-    ScheduleModule.forRoot(), // Enable cron jobs
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       useClass: isProduction ? DatabaseProductionFactory : DatabaseFactory,
       inject: [ConfigService],
