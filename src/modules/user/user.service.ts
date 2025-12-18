@@ -76,4 +76,27 @@ export class UserService {
       ? JSON.parse(JSON.stringify(user))
       : { member_of: [], admin_of: [], owned_clubs: [] };
   }
+
+  async getUserClubs(userId: string) {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: ['memberships', 'memberships.club', 'ownedClubs'],
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    // Collect all clubs the user owns or is a member of
+    const memberClubs = user.memberships.map((membership) => membership.club);
+    const ownedClubs = user.ownedClubs;
+
+    // Combine and deduplicate by club id
+    const allClubsMap = new Map<string, any>();
+    [...ownedClubs, ...memberClubs].forEach((club) => {
+      allClubsMap.set(club.id, club);
+    });
+
+    return Array.from(allClubsMap.values());
+  }
 }

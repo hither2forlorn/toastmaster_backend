@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsEnum,
   IsNotEmpty,
@@ -27,6 +28,7 @@ export class CreateMeetingDto {
     format: 'date-time',
     example: '2025-12-20T10:00:00Z',
   })
+  @Type(() => Date)
   @IsDate()
   date: Date;
 

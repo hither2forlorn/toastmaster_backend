@@ -25,6 +25,7 @@ import {
   GetMemberRoleDto,
   UpdateMemberRoleDto,
 } from './dtos/member-related.dto';
+import { Roles } from 'src/common/decorators/role.decorator';
 
 @ApiBearerAuth()
 @ApiTags('Clubs')
@@ -57,6 +58,7 @@ export class ClubController {
   }
 
   @UseGuards(MembershipGuard)
+  @Roles(ClubRole.OWNER, ClubRole.ADMIN)
   @Get('/code')
   getJoinCode(@Query('clubId') clubId: string, @Req() req) {
     console.log('this is clubId', clubId);
@@ -111,13 +113,16 @@ export class ClubController {
   }
 
   @Get('/member/role')
-  getMemberRole(@Body() data: GetMemberRoleDto) {
-    if (!data.clubId || !data.userId) {
+  getMemberRole(
+    @Query('clubId') clubId: string,
+    @Query('userId') userId: string,
+  ) {
+    if (!clubId || !userId) {
       throw new UnauthorizedException(
         'clubId and userId are required in the request body',
       );
     }
-    return this.clubMemberService.getMemberRole(data.clubId, data.userId);
+    return this.clubMemberService.getMemberRole(clubId, userId);
   }
 
   @UseGuards(MembershipGuard)

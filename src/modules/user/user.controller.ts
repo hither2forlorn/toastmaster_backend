@@ -34,4 +34,13 @@ export class UserController {
     console.log(userId);
     return this.userService.getProfile(userId);
   }
+
+  @Get('/my-clubs')
+  @ApiOperation({ summary: 'Get all clubs where user is a member or owner' })
+  @ApiCreatedResponse({
+    description: 'Returns list of clubs with user role and membership details',
+  })
+  getUserClubs(@GetUser('sub') userId: string) {
+    return this.userService.getUserClubs(userId);
+  }
 }
