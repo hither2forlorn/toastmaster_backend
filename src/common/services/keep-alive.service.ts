@@ -10,12 +10,12 @@ export class KeepAliveService {
 
   constructor(private configService: ConfigService) {
     this.isProduction = this.configService.get('NODE_ENV') === 'production';
-    
+
     // Get the full API URL from environment or construct it
     const port = this.configService.get('PORT', 10000);
     const host = this.configService.get('HOST', '0.0.0.0');
-    this.apiUrl = this.configService.get('KEEP_ALIVE_URL') || 
-                  `http://localhost:${port}`;
+    this.apiUrl =
+      this.configService.get('KEEP_ALIVE_URL') || `http://localhost:${port}`;
   }
 
   // Run every 10 minutes (Render free tier spins down after 15 min of inactivity)
@@ -28,7 +28,7 @@ export class KeepAliveService {
 
     try {
       const startTime = Date.now();
-      
+
       // Make a simple HTTP request to keep the service alive
       const response = await fetch(`${this.apiUrl}/api/health`, {
         method: 'GET',
@@ -36,7 +36,7 @@ export class KeepAliveService {
       });
 
       const duration = Date.now() - startTime;
-      
+
       if (response.ok) {
         this.logger.log(
           `✅ Keep-alive ping successful (${duration}ms) - Service staying awake`,

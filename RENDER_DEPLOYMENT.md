@@ -177,18 +177,18 @@ Scroll down to **Environment Variables** section and add these:
 
 ### Required Variables:
 
-| Key                | Value                                      | Notes                  |
-| ------------------ | ------------------------------------------ | ---------------------- |
-| `DATABASE_URL`     | Your Supabase connection string            | From Step 1.1          |
-| `NODE_ENV`         | `production`                               | Critical!              |
-| `PORT`             | `10000`                                    | Render's default       |
-| `API_PREFIX`       | `/api`                                     | API route prefix       |
-| `KEEP_ALIVE_URL`   | `https://toastmaster-api.onrender.com`     | Your Render URL        |
-| `HOST`             | `0.0.0.0`                                  | Bind to all interfaces |
-| `CORS_ORIGIN`      | `https://your-frontend.vercel.app`         | Your frontend URL      |
-| `JWT_SECRET`       | Generate secure secret                     | See below              |
-| `JWT_EXPIRES_IN`   | `7d`                                       | Token expiry           |
-| `JWT_ALGORITHM`    | `HS256`                                    | JWT algorithm          |
+| Key              | Value                                  | Notes                  |
+| ---------------- | -------------------------------------- | ---------------------- |
+| `DATABASE_URL`   | Your Supabase connection string        | From Step 1.1          |
+| `NODE_ENV`       | `production`                           | Critical!              |
+| `PORT`           | `10000`                                | Render's default       |
+| `API_PREFIX`     | `/api`                                 | API route prefix       |
+| `KEEP_ALIVE_URL` | `https://toastmaster-api.onrender.com` | Your Render URL        |
+| `HOST`           | `0.0.0.0`                              | Bind to all interfaces |
+| `CORS_ORIGIN`    | `https://your-frontend.vercel.app`     | Your frontend URL      |
+| `JWT_SECRET`     | Generate secure secret                 | See below              |
+| `JWT_EXPIRES_IN` | `7d`                                   | Token expiry           |
+| `JWT_ALGORITHM`  | `HS256`                                | JWT algorithm          |
 
 ### Generate JWT_SECRET:
 
@@ -316,6 +316,7 @@ Check Render logs to see keep-alive pings:
 ### Important Notes
 
 ⚠️ **Free Tier Limits:**
+
 - Render free tier has 750 hours/month
 - Keep-alive uses ~720 hours/month (24/7)
 - You have ~30 hours buffer
