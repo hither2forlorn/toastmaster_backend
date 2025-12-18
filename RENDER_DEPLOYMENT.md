@@ -177,15 +177,18 @@ Scroll down to **Environment Variables** section and add these:
 
 ### Required Variables:
 
-| Key              | Value                           | Notes            |
-| ---------------- | ------------------------------- | ---------------- |
-| `DATABASE_URL`   | Your Supabase connection string | From Step 1.1    |
-| `NODE_ENV`       | `production`                    | Critical!        |
-| `PORT`           | `10000`                         | Render's default |
-| `API_PREFIX`     | `/api`                          | API route prefix |
-| `JWT_SECRET`     | Generate secure secret          | See below        |
-| `JWT_EXPIRES_IN` | `7d`                            | Token expiry     |
-| `JWT_ALGORITHM`  | `HS256`                         | JWT algorithm    |
+| Key                | Value                                      | Notes                  |
+| ------------------ | ------------------------------------------ | ---------------------- |
+| `DATABASE_URL`     | Your Supabase connection string            | From Step 1.1          |
+| `NODE_ENV`         | `production`                               | Critical!              |
+| `PORT`             | `10000`                                    | Render's default       |
+| `API_PREFIX`       | `/api`                                     | API route prefix       |
+| `KEEP_ALIVE_URL`   | `https://toastmaster-api.onrender.com`     | Your Render URL        |
+| `HOST`             | `0.0.0.0`                                  | Bind to all interfaces |
+| `CORS_ORIGIN`      | `https://your-frontend.vercel.app`         | Your frontend URL      |
+| `JWT_SECRET`       | Generate secure secret                     | See below              |
+| `JWT_EXPIRES_IN`   | `7d`                                       | Token expiry           |
+| `JWT_ALGORITHM`    | `HS256`                                    | JWT algorithm          |
 
 ### Generate JWT_SECRET:
 
@@ -272,11 +275,54 @@ curl -X POST https://toastmaster-api.onrender.com/api/auth/register \
 
 - ✅ Supabase database created and schema loaded
 - ✅ Render web service created
-- ✅ All environment variables added
+- ✅ All environment variables added (including `KEEP_ALIVE_URL`)
 - ✅ Deployment shows "Live" status
 - ✅ API health check responds
 - ✅ Swagger docs load
 - ✅ Can register/login users
+- ✅ **Auto Keep-Alive enabled** - Service stays awake automatically! 🚀
+
+---
+
+## 🔄 Keep-Alive Feature (Prevents Spin Down)
+
+### How It Works
+
+Render's free tier **spins down after 15 minutes** of inactivity. Your app now has an **automatic keep-alive** system:
+
+- 🤖 **Cron job runs every 10 minutes** (automatically)
+- 🏓 Pings the `/api/health` endpoint
+- ✅ Keeps service awake without manual intervention
+- 📊 Logs each ping in Render logs
+
+### What You Need
+
+Just add the `KEEP_ALIVE_URL` environment variable:
+
+```env
+KEEP_ALIVE_URL=https://toastmaster-api.onrender.com
+```
+
+Replace with your actual Render URL after deployment!
+
+### Monitor Keep-Alive
+
+Check Render logs to see keep-alive pings:
+
+```
+✅ Keep-alive ping successful (245ms) - Service staying awake
+```
+
+### Important Notes
+
+⚠️ **Free Tier Limits:**
+- Render free tier has 750 hours/month
+- Keep-alive uses ~720 hours/month (24/7)
+- You have ~30 hours buffer
+- Upgrade to Starter ($7/mo) for unlimited uptime
+
+💡 **Disable Keep-Alive:**
+To disable, simply remove `KEEP_ALIVE_URL` env var or set `NODE_ENV` to something other than `production`.
 
 ---
 
