@@ -18,10 +18,8 @@ export class KeepAliveService {
       this.configService.get('KEEP_ALIVE_URL') || `http://localhost:${port}`;
   }
 
-  // Run every 10 minutes (Render free tier spins down after 15 min of inactivity)
   @Cron(CronExpression.EVERY_10_MINUTES)
   async handleKeepAlive() {
-    // Only run in production (Render)
     if (!this.isProduction) {
       return;
     }
@@ -29,26 +27,23 @@ export class KeepAliveService {
     try {
       const startTime = Date.now();
 
-      // Make a simple HTTP request to keep the service alive
       const response = await fetch(`${this.apiUrl}/api/health`, {
         method: 'GET',
-        signal: AbortSignal.timeout(5000), // 5 second timeout
+        signal: AbortSignal.timeout(5000),
       });
 
       const duration = Date.now() - startTime;
 
       if (response.ok) {
         this.logger.log(
-          `✅ Keep-alive ping successful (${duration}ms) - Service staying awake`,
+          ` Keep-alive ping successful (${duration}ms) - Service staying awake`,
         );
       } else {
-        this.logger.warn(
-          `⚠️ Keep-alive ping returned status ${response.status}`,
-        );
+        this.logger.warn(` Keep-alive ping returned status ${response.status}`);
       }
     } catch (error) {
       this.logger.error(
-        `❌ Keep-alive ping failed: ${error.message}`,
+        ` Keep-alive ping failed: ${error.message}`,
         error.stack,
       );
     }
@@ -56,7 +51,7 @@ export class KeepAliveService {
 
   // Optional: Manual ping method
   async ping() {
-    this.logger.log('🏓 Manual keep-alive ping triggered');
+    this.logger.log(' Manual keep-alive ping triggered');
     await this.handleKeepAlive();
     return { message: 'Keep-alive ping sent' };
   }
