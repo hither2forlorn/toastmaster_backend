@@ -9,4 +9,12 @@ export class AddMeetingNoteDto {
   @IsString()
   @IsNotEmpty()
   notes: string;
+
+  @ApiProperty({
+    description: 'ID of the club',
+    example: 'uuid-of-club',
+  })
+  @IsString()
+  @IsNotEmpty()
+  clubId: string;
 }
