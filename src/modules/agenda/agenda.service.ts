@@ -6,6 +6,13 @@ import { CreateAgendaDto } from './dtos/create-agenda.dto';
 import { ClubMemberService } from '../club/club-member.service';
 import { ClubService } from '../club/club.service';
 
+export interface GrammarianAgendaData {
+  agendaId: string;
+  memberId: string;
+  userId: string;
+  roleName:string;
+}
+
 @Injectable()
 export class AgendaService {
   constructor(
@@ -142,17 +149,48 @@ export class AgendaService {
   }
 
 
-  async findAgendaWithMember(agendaId: string): Promise<Agenda> {
-    const agenda = await this.agendaRepo.findOne({
-      where: { id: agendaId },
-      relations: ['member'],
-    });
+  async getAgendaIdByMeetingIdWhereUserIsGrammarian(meetingId: string, agendaReport?: Boolean): Promise<GrammarianAgendaData | null> {
 
-    if (!agenda) {
-      throw new BadRequestException('Agenda not found');
+
+    if (agendaReport) {
+      const agenda = await this.agendaRepo
+        .createQueryBuilder('a')
+        .innerJoin('meetings', 'm', 'm.id = a.meeting_id')
+        .innerJoin('club_member', 'cm', 'cm.id = a.member_id')
+        .innerJoin('agenda_reports', 'ar', 'ar.agenda_id = a.id')
+        .select('a.id', 'agendaId')
+        .addSelect('a.member_id', 'memberId')
+        .addSelect('ar.id', 'reportId')
+        .addSelect('cm.user_id', 'userId')
+        .addSelect('a.role_name','roleName')
+        .where('m.id = :meetingId', { meetingId })
+        .andWhere('a.role_name = :roleName', { roleName: 'Grammarian' })
+        .getRawOne();
+
+      if (!agenda) {
+        throw new BadRequestException('Agenda with Grammarian role in given meeting not found');
+      }
+
+      return agenda;
+    } else {
+      const agenda = await this.agendaRepo
+        .createQueryBuilder('a')
+        .innerJoin('meetings', 'm', 'm.id = a.meeting_id')
+        .innerJoin('club_member', 'cm', 'cm.id = a.member_id')
+        .select('a.id', 'agendaId')
+        .addSelect('a.member_id', 'memberId')
+        .addSelect('cm.user_id', 'userId')
+        .addSelect('a.role_name','roleName')
+        .where('m.id = :meetingId', { meetingId })
+        .andWhere('a.role_name = :roleName', { roleName: 'Grammarian' })
+        .getRawOne();
+
+      if (!agenda) {
+        throw new BadRequestException('Agenda with Grammarian role in given meeting not found');
+      }
+
+      return agenda;
     }
-
-    return agenda;
   }
 
 }
