@@ -13,6 +13,7 @@ export class AgendaService {
     private readonly memberService: ClubMemberService,
   ) {}
 
+
   // utils function
   private validateMemberInput(data: CreateAgendaDto) {
     if (!data.memberId && !data.memberName) {
@@ -139,4 +140,19 @@ export class AgendaService {
 
     return { message: 'Agenda reordered successfully' };
   }
+
+
+  async findAgendaWithMember(agendaId: string): Promise<Agenda> {
+    const agenda = await this.agendaRepo.findOne({
+      where: { id: agendaId },
+      relations: ['member'],
+    });
+
+    if (!agenda) {
+      throw new BadRequestException('Agenda not found');
+    }
+
+    return agenda;
+  }
+
 }
