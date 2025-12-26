@@ -48,7 +48,7 @@ export class AgendaService {
     };
   }
 
-  async createAgenda(data: CreateAgendaDto): Promise<Agenda> {
+  async createAgenda(data: CreateAgendaDto, clubId: string): Promise<Agenda> {
     this.validateMemberInput(data);
 
     const memberData = await this.resolveMember(data);
@@ -121,16 +121,6 @@ export class AgendaService {
     await this.agendaRepo.delete(agenda.id);
 
     return { message: 'Agenda deleted successfully' };
-  }
-
-  async assignRoleToAgenda(
-    agendaId: string,
-    roleName: string,
-  ): Promise<Agenda> {
-    const agenda = await this.getAgendaById(agendaId);
-
-    agenda.roleName = roleName;
-    return this.agendaRepo.save(agenda);
   }
 
   async updateSequenceOfAgendas(meetingId: string, agendaOrder: string[]) {

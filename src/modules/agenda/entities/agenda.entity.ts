@@ -1,18 +1,24 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { ClubMember } from 'src/modules/club/entities/club-member.entity';
 import { Meeting } from 'src/modules/meeting/entities/meeting.entity';
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+  Unique,
+} from 'typeorm';
 
 @Entity('agendas')
+@Unique(['meetingId', 'sequence'])
 export class Agenda extends BaseEntity {
-  @Column({ length: '99' })
+  @Column({ length: 255 })
   title: string;
 
-  @Column({ type: 'text', nullable: true })
-  description?: string;
-
-  @Column({ type: 'date' })
-  date: Date;
+  // @Column({ type: 'date' })
+  // date: Date;
 
   @Column({ name: 'role_name' })
   roleName: string;
@@ -42,7 +48,7 @@ export class Agenda extends BaseEntity {
   @JoinColumn({ name: 'meeting_id' })
   meeting: Meeting;
 
-  @OneToOne(() => ClubMember)
+  @ManyToOne(() => ClubMember)
   @JoinColumn({ name: 'member_id' })
   member?: ClubMember;
 }
