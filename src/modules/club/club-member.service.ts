@@ -55,6 +55,15 @@ export class ClubMemberService {
     return member;
   }
 
+  async getUserClubs(userId: string): Promise<Club[]> {
+    const memberships = await this.memberRepo.find({
+      where: { userId },
+      relations: ['club'],
+    });
+
+    return memberships.map((membership) => membership.club);
+  }
+
   async addMemberToClub(
     clubId: string,
     options: {

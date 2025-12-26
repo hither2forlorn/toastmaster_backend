@@ -11,7 +11,6 @@ export class AgendaService {
   constructor(
     @InjectRepository(Agenda) private readonly agendaRepo: Repository<Agenda>,
     private readonly memberService: ClubMemberService,
-    private readonly clubService: ClubService,
   ) {}
 
   // utils function
@@ -32,8 +31,11 @@ export class AgendaService {
     const member = await this.memberService.getMemberById(data.memberId);
 
     if (member.userId) {
-      const clubs = await this.clubService.getUserClubs(member.userId);
+      const clubs = await this.memberService.getUserClubs(member.userId);
+      console.log(clubs);
       const clubIds = clubs.map((c) => c.id);
+
+      console.log(clubIds);
 
       if (!clubIds.includes(member.clubId)) {
         throw new BadRequestException(
