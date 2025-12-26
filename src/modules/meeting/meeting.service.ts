@@ -120,6 +120,14 @@ export class MeetingService {
 
     return meetings;
   }
+  async getupcomingMeeting(){
+    const upcomingMeeting = await this.meetingRepo.find({order:{
+      date:{
+        direction:"ASC"
+      }
+    }});
+    return upcomingMeeting;
+  }
 
   async deleteMeeting(id: string) {
     const deleteResult = await this.meetingRepo.delete(id);
