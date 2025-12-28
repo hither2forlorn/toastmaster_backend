@@ -24,40 +24,53 @@ export class AgendaReportService {
     ) { }
 
     async createAgendaReportGrammarian(meetingId, dto: CreateAgendaReportDto, userId): Promise<AgendaReport> {
-        const agenda = await this.agendaService.getAgendaIdByMeetingIdWhereUserIsGrammarian(meetingId);
-        // console.log(` UserId : ${userId}`)
-        // console.log(agenda)
+        const agendas = await this.agendaService.getAgendaIdByMeetingId(meetingId);
+        if (!agendas || agendas.length === 0) {
+            throw new ForbiddenException('No agenda found');
+        }
+
+        const userIds = agendas.map(a => a.userId);
+        if (!userIds.includes(userId)) {
+            throw new ForbiddenException('Not your agenda');
+        }
+
+        const roleNames = agendas.map(a => a.roleName);
+        if (!roleNames.includes(dto?.reportType.toString())) {
+            throw new BadRequestException(`${dto?.reportType} role does not create reports`);
+        }
+
+        const agenda = agendas.find(a => a.userId === userId);
         if (!agenda) {
             throw new ForbiddenException('Not your agenda');
         }
-        if (agenda?.userId !== userId) {
-            throw new ForbiddenException('Not your agenda');
-        }
 
-        const reportRoles = ['Grammarian', 'Ah Counter'];
-        if (!reportRoles.includes(agenda.roleName)) {
-            throw new BadRequestException(`${agenda.roleName} role does not create reports`);
-        }
-
-        if (dto.reportType === 'GRAMMARIAN' && agenda.roleName !== 'Grammarian') {
+        if (
+            (dto.reportType === 'GRAMMARIAN' && agenda.roleName !== 'Grammarian') ||
+            (dto.reportType === 'AH_COUNTER' && agenda.roleName !== 'Ah Counter')
+        ) {
             throw new BadRequestException('Report type must match your assigned role');
         }
 
         let report = await this.agendaReportRepo.findOne({
-            where: { agendaId: agenda?.agendaId }
+            where: { agendaId: agenda.agendaId }
         });
-        console.log(report)
 
         if (report) {
-            if (!dto.memberEvaluations || dto.memberEvaluations.length === 0) {
-                throw new BadRequestException('Member evaluations are required');
+            if (dto.memberEvaluations && dto.memberEvaluations?.length !== 0) {
+                if (!report.memberEvaluations) {
+                    report.memberEvaluations = [];
+                }
+                report.memberEvaluations.push(dto.memberEvaluations[0]);
+                return await this.agendaReportRepo.save(report);
             }
-            if (!report.memberEvaluations) {
-                report.memberEvaluations = [];
+            if (dto.fillerWordCounts && dto.fillerWordCounts?.length !== 0) {
+                if (!report.fillerWordCounts) {
+                    report.fillerWordCounts = [];
+                }
+                report.fillerWordCounts.push(dto.fillerWordCounts[0]);
+                return await this.agendaReportRepo.save(report);
             }
-
-            report.memberEvaluations.push(dto.memberEvaluations[0]);
-            return await this.agendaReportRepo.save(report);
+            throw new BadRequestException("Agenda Report creation fail");
         } else {
             report = this.agendaReportRepo.create({
                 agendaId: agenda.agendaId,
@@ -73,6 +86,31 @@ export class AgendaReportService {
             throw new BadRequestException("Agenda Report doesn't exist for this agenda report id");
         }
         return agendaReport
+    }
+
+    async getAgendaReportByMemberId(memberId: string) {
+        const agendaReport = await this.agendaReportRepo
+            .query(`
+                        SELECT
+                        ar.id as report_id,
+                        evaluation->>'memberId' as evaluated_member_id,
+                        evaluation->>'memberName' as evaluated_member_name,
+                        evaluation->>'grammarIssues' as grammar_issues,
+                        evaluation->'examples' as usage_examples,
+                        evaluation->>'wordUsageCount' as word_usage_count
+                        FROM agenda_reports ar
+                        CROSS JOIN LATERAL jsonb_array_elements(ar.member_evaluations) as evaluation
+                        WHERE evaluation->>'memberId' = $1
+                    `, [memberId]
+            );
+
+        // console.log(memberId)
+        // console.log(agendaReport)
+        if (agendaReport.length === 0) {
+            throw new NotFoundException("No agenda reports found for this member");
+        }
+
+        return agendaReport;
     }
 
     async deleteAgendaReport(userId: string, reportId: string): Promise<boolean> {
@@ -102,37 +140,87 @@ export class AgendaReportService {
         return true;
     }
 
-    async deleteAgendaReportByMemberId(userId, meetingId, reportId): Promise<AgendaReport> {
-        const agenda = await this.agendaService.getAgendaIdByMeetingIdWhereUserIsGrammarian(
-            meetingId,
-            true
-        );
-
-        if (!agenda) {
-            throw new NotFoundException('No Grammarian agenda found for this meeting');
-        }
-        if (agenda?.userId !== userId) {
-            throw new ForbiddenException('Not your agenda');
-        }
-
-        const report = await this.agendaReportRepo.findOne({
-            where: { agendaId: agenda.agendaId }
-        });
-
+    async deleteAgendaReportByMemberId(
+        userId: string,
+        memberId: string,
+        reportId: string
+    ): Promise<AgendaReport> {
+        const report = await this.agendaReportRepo
+            .findOne({
+                where: { id: reportId },
+                relations: ['agenda', 'agenda.member']
+            });
+        console.log(report)
         if (!report) {
-            throw new NotFoundException('No report exists for this agenda');
+            throw new NotFoundException("No agenda report found with given report id");
         }
-        if (report.id !== reportId) {
-            throw new BadRequestException('Report ID mismatch');
+        if (report.agenda.member?.userId !== userId) {
+            throw new ForbiddenException("You cannot modify this resource");
         }
 
         if (report.memberEvaluations && report.memberEvaluations.length > 0) {
+            if (!report.memberEvaluations) {
+                report.memberEvaluations = [];
+            }
             report.memberEvaluations = report.memberEvaluations.filter(
-                evaluation => evaluation.memberId !== agenda.memberId
+                evaluation => evaluation.memberId !== memberId
             );
 
             return await this.agendaReportRepo.save(report);
         }
-        throw new NotFoundException('No member evaluations exist in this report');
+        if (report.fillerWordCounts && report.fillerWordCounts.length > 0) {
+            if (!report.fillerWordCounts) {
+                report.fillerWordCounts = [];
+            }
+            report.fillerWordCounts.filter(
+                count => count.memberId !== memberId
+            );
+            return await this.agendaReportRepo.save(report);
+        }
+        throw new NotFoundException('No evaluation found for this member in the report');
+    }
+
+    async editAgendaReportOfMemberByMemberId(
+        userId: string,
+        memberId: string,
+        reportId: string,
+        dto: CreateAgendaReportDto
+    ): Promise<AgendaReport> {
+        const report = await this.agendaReportRepo.findOne({
+            where: { id: reportId },
+            relations: ['agenda', 'agenda.member']
+        });
+        console.log(report)
+
+        if (!report) {
+            throw new NotFoundException("No agenda report found with given report id");
+        }
+        if (report.agenda.member?.userId !== userId) {
+            throw new ForbiddenException("You cannot modify this resource");
+        }
+        if (dto.memberEvaluations && dto.memberEvaluations.length > 0) {
+            if (!report.memberEvaluations) {
+                report.memberEvaluations = [];
+            }
+            report.memberEvaluations = report.memberEvaluations.filter(
+                evaluation => evaluation.memberId !== memberId
+            );
+            report.memberEvaluations.push(dto.memberEvaluations[0]);
+
+            return await this.agendaReportRepo.save(report);
+        }
+        if (dto.fillerWordCounts && dto.fillerWordCounts.length > 0) {
+            if (!report.fillerWordCounts) {
+                report.fillerWordCounts = [];
+            }
+            report.fillerWordCounts = report.fillerWordCounts.filter(
+                count => count.memberId !== memberId
+            );
+            report.fillerWordCounts.push(dto.fillerWordCounts[0]);
+
+            return await this.agendaReportRepo.save(report);
+        }
+
+        throw new BadRequestException('No evaluation or filler count data provided');
     }
 }

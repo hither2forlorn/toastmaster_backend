@@ -20,7 +20,7 @@ export class AgendaReportController {
     constructor(private agendaReportService: AgendaReportService) { }
 
 
-
+    // create
     @ApiOperation({ summary: 'Grammerian and ah-report create' })
     @ApiCreatedResponse({
         description: 'Agenda Report has been successfully created.',
@@ -38,7 +38,7 @@ export class AgendaReportController {
     }
 
 
-
+    // get by reportId
     @ApiOperation({ summary: 'Get agenda report' })
     @ApiOkResponse({
         description: 'Agenda Report has been successfully extracted.',
@@ -46,19 +46,35 @@ export class AgendaReportController {
     @ApiBadRequestResponse({
         description: "You don't have access to get this report",
     })
-    @Get(':agendaReportId')
+    @Get(':reportId')
     getAgendaReport(
-        @Param('agendaReportId') agendaReportId: string,
+        @Param('reportId') reportId: string,
         @GetUser() user: any,
     ) {
-        return this.agendaReportService.getAgendaReportByAgendaReportId(agendaReportId);
+        return this.agendaReportService.getAgendaReportByAgendaReportId(reportId);
+    }
+
+
+
+    // get report of loggedin user
+    @ApiOperation({ summary: 'Get agenda report of logged in user' })
+    @ApiOkResponse({
+        description: 'Agenda Report has been successfully extracted.',
+    })
+    @ApiBadRequestResponse({
+        description: "You don't have access to get this report",
+    })
+    @Get()
+    getAgendaReportOfUser(
+        @GetUser() user: any,
+    ) {
+        return this.agendaReportService.getAgendaReportByMemberId(user.id);
     }
 
 
 
 
-
-
+    // delete report by reportId
     @ApiOperation({ summary: 'Delete agenda report' })
     @ApiCreatedResponse({
         description: 'Agenda Report has been successfully deleted.',
@@ -76,6 +92,7 @@ export class AgendaReportController {
 
 
 
+    // delete report of specific user
     @ApiOperation({ summary: 'Delete agenda report of member' })
     @ApiCreatedResponse({
         description: 'Agenda Report of member has been successfully deleted.',
@@ -87,8 +104,28 @@ export class AgendaReportController {
     deleteAgendaReportByMemberId(
         @Param('memberId') memberId: string,
         @Param('reportId') reportId: string,
-        @GetUser() user: any,
+        @GetUser() user: any
     ) {
-        return this.agendaReportService.deleteAgendaReportByMemberId(user.id, memberId,reportId);
+        return this.agendaReportService.deleteAgendaReportByMemberId(user.id, memberId, reportId);
+    }
+
+
+
+    // edit report of specific user
+    @ApiOperation({ summary: 'Edit agenda report of member' })
+    @ApiCreatedResponse({
+        description: 'Agenda Report of member has been successfully edited.',
+    })
+    @ApiBadRequestResponse({
+        description: "You don't have access to edit this report",
+    })
+    @Patch('edit/:memberId/:reportId')
+    editAgendaReportByMemberId(
+        @Param('memberId') memberId: string,
+        @Param('reportId') reportId: string,
+        @GetUser() user: any,
+        @Body() dto:CreateAgendaReportDto
+    ) {
+        return this.agendaReportService.editAgendaReportOfMemberByMemberId(user.id, memberId, reportId,dto);
     }
 }

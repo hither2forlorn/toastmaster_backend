@@ -10,7 +10,7 @@ export interface GrammarianAgendaData {
   agendaId: string;
   memberId: string;
   userId: string;
-  roleName:string;
+  roleName: string;
 }
 
 @Injectable()
@@ -149,9 +149,7 @@ export class AgendaService {
   }
 
 
-  async getAgendaIdByMeetingIdWhereUserIsGrammarian(meetingId: string, agendaReport?: Boolean): Promise<GrammarianAgendaData | null> {
-
-
+  async getAgendaIdByMeetingId(meetingId: string,agendaReport?: Boolean): Promise<GrammarianAgendaData[] | null> {
     if (agendaReport) {
       const agenda = await this.agendaRepo
         .createQueryBuilder('a')
@@ -162,13 +160,13 @@ export class AgendaService {
         .addSelect('a.member_id', 'memberId')
         .addSelect('ar.id', 'reportId')
         .addSelect('cm.user_id', 'userId')
-        .addSelect('a.role_name','roleName')
+        .addSelect('a.role_name', 'roleName')
         .where('m.id = :meetingId', { meetingId })
-        .andWhere('a.role_name = :roleName', { roleName: 'Grammarian' })
-        .getRawOne();
+        .andWhere('a.role_name IN (:...roles)', { roles: ['Grammarian', 'Ah Counter'] })
+        .getRawMany();
 
-      if (!agenda) {
-        throw new BadRequestException('Agenda with Grammarian role in given meeting not found');
+      if (agenda.length === 0) {
+        throw new BadRequestException('Agenda with Grammarian or ah counter role in given meeting not found');
       }
 
       return agenda;
@@ -180,10 +178,10 @@ export class AgendaService {
         .select('a.id', 'agendaId')
         .addSelect('a.member_id', 'memberId')
         .addSelect('cm.user_id', 'userId')
-        .addSelect('a.role_name','roleName')
+        .addSelect('a.role_name', 'roleName')
         .where('m.id = :meetingId', { meetingId })
-        .andWhere('a.role_name = :roleName', { roleName: 'Grammarian' })
-        .getRawOne();
+        .andWhere('a.role_name IN (:...roles)', { roles: ['Grammarian', 'Ah Counter'] })
+        .getRawMany();
 
       if (!agenda) {
         throw new BadRequestException('Agenda with Grammarian role in given meeting not found');
