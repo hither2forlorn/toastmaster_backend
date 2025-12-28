@@ -34,7 +34,7 @@ export class AgendaReportService {
             throw new ForbiddenException('Not your agenda');
         }
 
-        const roleNames = agendas.map(a => a.roleName);
+        const roleNames = agendas.map(a => a.roleName.toUpperCase().replace(' ', '_'));
         if (!roleNames.includes(dto?.reportType.toString())) {
             throw new BadRequestException(`${dto?.reportType} role does not create reports`);
         }
@@ -93,19 +93,21 @@ export class AgendaReportService {
             .query(`
                         SELECT
                         ar.id as report_id,
+                        ar.report_type,
                         evaluation->>'memberId' as evaluated_member_id,
                         evaluation->>'memberName' as evaluated_member_name,
                         evaluation->>'grammarIssues' as grammar_issues,
                         evaluation->'examples' as usage_examples,
                         evaluation->>'wordUsageCount' as word_usage_count
                         FROM agenda_reports ar
-                        CROSS JOIN LATERAL jsonb_array_elements(ar.member_evaluations) as evaluation
-                        WHERE evaluation->>'memberId' = $1
+                        left JOIN LATERAL jsonb_array_elements(ar.filler_word_counts) as filler on true
+                        left JOIN LATERAL jsonb_array_elements(ar.member_evaluations ) as evaluation on true
+                        WHERE evaluation->>'memberId' = $1 or filler->>'memberId' = $1
                     `, [memberId]
             );
 
-        // console.log(memberId)
-        // console.log(agendaReport)
+        console.log(memberId)
+        console.log(agendaReport)
         if (agendaReport.length === 0) {
             throw new NotFoundException("No agenda reports found for this member");
         }
@@ -150,7 +152,7 @@ export class AgendaReportService {
                 where: { id: reportId },
                 relations: ['agenda', 'agenda.member']
             });
-        console.log(report)
+        // console.log(report)
         if (!report) {
             throw new NotFoundException("No agenda report found with given report id");
         }
@@ -182,22 +184,25 @@ export class AgendaReportService {
 
     async editAgendaReportOfMemberByMemberId(
         userId: string,
-        memberId: string,
         reportId: string,
-        dto: CreateAgendaReportDto
+        dto: CreateAgendaReportDto,
+        memberId?: string
     ): Promise<AgendaReport> {
         const report = await this.agendaReportRepo.findOne({
             where: { id: reportId },
             relations: ['agenda', 'agenda.member']
         });
-        console.log(report)
 
         if (!report) {
             throw new NotFoundException("No agenda report found with given report id");
         }
+
         if (report.agenda.member?.userId !== userId) {
             throw new ForbiddenException("You cannot modify this resource");
         }
+
+        let hasChanges = false;
+
         if (dto.memberEvaluations && dto.memberEvaluations.length > 0) {
             if (!report.memberEvaluations) {
                 report.memberEvaluations = [];
@@ -206,9 +211,9 @@ export class AgendaReportService {
                 evaluation => evaluation.memberId !== memberId
             );
             report.memberEvaluations.push(dto.memberEvaluations[0]);
-
-            return await this.agendaReportRepo.save(report);
+            hasChanges = true;
         }
+
         if (dto.fillerWordCounts && dto.fillerWordCounts.length > 0) {
             if (!report.fillerWordCounts) {
                 report.fillerWordCounts = [];
@@ -217,10 +222,26 @@ export class AgendaReportService {
                 count => count.memberId !== memberId
             );
             report.fillerWordCounts.push(dto.fillerWordCounts[0]);
-
-            return await this.agendaReportRepo.save(report);
+            hasChanges = true;
         }
 
-        throw new BadRequestException('No evaluation or filler count data provided');
+        const generalFields = ['wordOfTheDay', 'wordOfTheDayDefinition', 'grammarNotes', 'overallNotes'];
+        for (const field of generalFields) {
+            if (dto[field] !== undefined) {
+                console.log(`Updating ${field}:`, dto[field]);
+                report[field] = dto[field];
+                hasChanges = true;
+            } else {
+                console.log(`Field ${field} is undefined in dto`);
+            }
+        }
+
+        // console.log('hasChanges:', hasChanges);
+
+        if (!hasChanges) {
+            throw new BadRequestException('No data provided to update');
+        }
+
+        return await this.agendaReportRepo.save(report);
     }
 }

@@ -1,10 +1,11 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
     ApiCreatedResponse,
     ApiOkResponse,
     ApiOperation,
+    ApiQuery,
     ApiTags,
 } from '@nestjs/swagger';
 import { AgendaReportService } from './agenda-report.service';
@@ -19,6 +20,34 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 export class AgendaReportController {
     constructor(private agendaReportService: AgendaReportService) { }
 
+    // edit report of specific user
+    @ApiOperation({ summary: 'Edit agenda report of member' })
+    @ApiCreatedResponse({
+        description: 'Agenda Report of member has been successfully edited.',
+    })
+    @ApiBadRequestResponse({
+        description: "You don't have access to edit this report",
+    })
+    @ApiQuery({
+        name: 'memberId',
+        required: false,
+        type: String,
+        description: 'Optional member ID to filter the report edit'
+    })
+    @Patch('edit/:reportId')
+    editAgendaReportByMemberId(
+        @Param('reportId') reportId: string,
+        @GetUser() user: any,
+        @Body() dto: CreateAgendaReportDto,
+        @Query('memberId') memberId?: string
+    ) {
+        return this.agendaReportService.editAgendaReportOfMemberByMemberId(
+            user.id,
+            reportId,
+            dto,
+            memberId
+        );
+    }
 
     // create
     @ApiOperation({ summary: 'Grammerian and ah-report create' })
@@ -107,25 +136,5 @@ export class AgendaReportController {
         @GetUser() user: any
     ) {
         return this.agendaReportService.deleteAgendaReportByMemberId(user.id, memberId, reportId);
-    }
-
-
-
-    // edit report of specific user
-    @ApiOperation({ summary: 'Edit agenda report of member' })
-    @ApiCreatedResponse({
-        description: 'Agenda Report of member has been successfully edited.',
-    })
-    @ApiBadRequestResponse({
-        description: "You don't have access to edit this report",
-    })
-    @Patch('edit/:memberId/:reportId')
-    editAgendaReportByMemberId(
-        @Param('memberId') memberId: string,
-        @Param('reportId') reportId: string,
-        @GetUser() user: any,
-        @Body() dto:CreateAgendaReportDto
-    ) {
-        return this.agendaReportService.editAgendaReportOfMemberByMemberId(user.id, memberId, reportId,dto);
     }
 }
