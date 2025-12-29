@@ -47,6 +47,13 @@ export class AgendaController {
   }
 
   @Public()
+  @Get('/role-counts')
+  @ApiOperation({ summary: 'Get role counts for all members' })
+  async getRoleCounts() {
+    return this.agendaService.getRoleCounts();
+  }
+
+  @Public()
   @Get('/:id')
   @ApiOperation({ summary: 'Get agenda by ID' })
   @ApiParam({ name: 'id', description: 'Agenda ID' })

@@ -139,22 +139,19 @@ export class AgendaService {
     agenda.roleName = roleName;
     return this.agendaRepo.save(agenda);
   }
-  async getRoleCount(memberId: string) {
-    const data = await this.agendaRepo.findAndCount({
-      where: {
-        memberId: memberId,
-      },
-    });
-    return data;
-  }
-  async getMemberRoleCount(memberId: string, role: string) {
-    const data = await this.agendaRepo.findAndCount({
-      where: {
-        memberId: memberId,
-        roleName: role,
-      },
-    });
-    return data;
+  async getRoleCounts() {
+    const roleCounts = await this.agendaRepo
+      .createQueryBuilder('agenda')
+      .select('agenda.roleName', 'role')
+      .addSelect('agenda.memberName', 'memberName')
+      .addSelect('COUNT(agenda.roleName)', 'count')
+      .groupBy('agenda.roleName')
+      .addGroupBy('agenda.memberName')
+      .getRawMany();
+
+    return roleCounts.map(
+      (item) => `${item.count} : ${item.role} : ${item.memberName}`,
+    );
   }
   async updateSequenceOfAgendas(meetingId: string, agendaOrder: string[]) {
     const agendas = await this.agendaRepo.find({ where: { meetingId } });
