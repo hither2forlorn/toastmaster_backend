@@ -1,13 +1,6 @@
-import {
-  IsString,
-  IsDate,
-  IsNumber,
-  IsBoolean,
-  IsOptional,
-  IsMongoId,
-} from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 
 export class CreateAgendaDto {
   @ApiProperty({
@@ -17,22 +10,13 @@ export class CreateAgendaDto {
   @IsString()
   title: string;
 
-  @ApiProperty({
-    description: 'A brief description of the agenda',
-    required: false,
-    example: 'This is the agenda for our weekly team meeting.',
-  })
-  @IsString()
-  @IsOptional()
-  description?: string;
-
-  @ApiProperty({
-    description: 'The date of the agenda',
-    example: '2024-12-31T10:00:00Z',
-  })
-  @IsDate()
-  @Type(() => Date)
-  date: Date;
+  // @ApiProperty({
+  //   description: 'The date of the agenda',
+  //   example: '2024-12-31T10:00:00Z',
+  // })
+  // @IsDate()
+  // @Type(() => Date)
+  // date: Date;
 
   @ApiProperty({
     description: 'The role name associated with the agenda',
@@ -59,7 +43,8 @@ export class CreateAgendaDto {
     description: 'The ID of the meeting',
     example: 'meeting-123',
   })
-  @IsMongoId()
+  @IsNotEmpty()
+  @IsString()
   meetingId: string;
 
   @ApiProperty({
@@ -68,7 +53,7 @@ export class CreateAgendaDto {
     required: false,
   })
   @IsOptional()
-  @IsMongoId()
+  @IsString()
   memberId?: string;
 
   @ApiProperty({
@@ -88,4 +73,12 @@ export class CreateAgendaDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiProperty({
+    example: 'clubId',
+  })
+  @IsString()
+  clubId: string;
 }
+
+export class EditAgendaDto extends PartialType(CreateAgendaDto) {}

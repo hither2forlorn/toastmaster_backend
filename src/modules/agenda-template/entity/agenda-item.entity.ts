@@ -1,5 +1,5 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { AgendaTemplate } from './agenda-template.entity';
 import { AGENDA_ROLE } from '../enum/agenda-role.enum';
 
@@ -25,9 +25,10 @@ export class AgendaTemplateItem extends BaseEntity {
   @Column()
   sequence: number;
 
-  @Column({ name: 'agenda_template_id' })
+  @Column({ name: 'agenda_template_id', nullable: true })
   agendaTemplateId: string;
 
   @ManyToOne(() => AgendaTemplate, (template) => template.items)
+  @JoinColumn({ name: 'agenda_template_id' })
   agendaTemplate: AgendaTemplate;
 }

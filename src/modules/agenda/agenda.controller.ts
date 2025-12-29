@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -15,7 +16,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { AgendaService } from './agenda.service';
-import { CreateAgendaDto } from './dtos/create-agenda.dto';
+import { CreateAgendaDto, EditAgendaDto } from './dtos/create-agenda.dto';
 import { Public } from 'src/common/decorators/public.decorator';
 import { MembershipGuard } from 'src/common/guards/membership.guard';
 import { Roles } from 'src/common/decorators/role.decorator';
@@ -32,8 +33,8 @@ export class AgendaController {
 
   @Post('/create')
   @ApiOperation({ summary: 'Create a new agenda item' })
-  createAgenda(@Body() data: CreateAgendaDto) {
-    return this.agendaService.createAgenda(data);
+  createAgenda(@Body() data: CreateAgendaDto, @Query('clubId') clubId: string) {
+    return this.agendaService.createAgenda(data, clubId);
   }
 
   // Public routes
@@ -66,7 +67,7 @@ export class AgendaController {
   @ApiParam({ name: 'id', description: 'Agenda ID' })
   async updateAgenda(
     @Param('id') agendaId: string,
-    @Body() data: Partial<CreateAgendaDto>,
+    @Body() data: EditAgendaDto,
   ) {
     return this.agendaService.updateAgenda(agendaId, data);
   }
@@ -74,18 +75,11 @@ export class AgendaController {
   @Delete('/:id')
   @ApiOperation({ summary: 'Delete an agenda item' })
   @ApiParam({ name: 'id', description: 'Agenda ID' })
-  async deleteAgenda(@Param('id') agendaId: string) {
-    return this.agendaService.deleteAgenda(agendaId);
-  }
-
-  @Patch('/:id/assign-role')
-  @ApiOperation({ summary: 'Assign role to an agenda item' })
-  @ApiParam({ name: 'id', description: 'Agenda ID' })
-  async assignRoleToAgenda(
+  async deleteAgenda(
     @Param('id') agendaId: string,
-    @Body() dto: AssignRoleDto,
+    @Query('clubId') clubId: string,
   ) {
-    return this.agendaService.assignRoleToAgenda(agendaId, dto.roleName);
+    return this.agendaService.deleteAgenda(agendaId);
   }
 
   @Patch('/meeting/:meetingId/reorder')
