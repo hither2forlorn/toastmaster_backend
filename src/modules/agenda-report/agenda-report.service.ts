@@ -91,23 +91,16 @@ export class AgendaReportService {
     async getAgendaReportByMemberId(memberId: string) {
         const agendaReport = await this.agendaReportRepo
             .query(`
-                        SELECT
-                        ar.id as report_id,
-                        ar.report_type,
-                        evaluation->>'memberId' as evaluated_member_id,
-                        evaluation->>'memberName' as evaluated_member_name,
-                        evaluation->>'grammarIssues' as grammar_issues,
-                        evaluation->'examples' as usage_examples,
-                        evaluation->>'wordUsageCount' as word_usage_count
-                        FROM agenda_reports ar
-                        left JOIN LATERAL jsonb_array_elements(ar.filler_word_counts) as filler on true
-                        left JOIN LATERAL jsonb_array_elements(ar.member_evaluations ) as evaluation on true
-                        WHERE evaluation->>'memberId' = $1 or filler->>'memberId' = $1
+                        select *
+                        from agenda_reports ar 
+                        left join lateral  jsonb_array_elements(ar.member_evaluations) as eval on true
+                        left join lateral jsonb_array_elements(ar.filler_word_counts) as filler on true
+                        where filler->>'memberId' = $1 or eval->>'memberId' = $1
                     `, [memberId]
             );
 
-        console.log(memberId)
-        console.log(agendaReport)
+        // console.log(memberId)
+        // console.log(agendaReport)
         if (agendaReport.length === 0) {
             throw new NotFoundException("No agenda reports found for this member");
         }
@@ -231,7 +224,7 @@ export class AgendaReportService {
                 // console.log(`Updating ${field}:`, dto[field]);
                 report[field] = dto[field];
                 hasChanges = true;
-            } 
+            }
         }
 
         // console.log('hasChanges:', hasChanges);
