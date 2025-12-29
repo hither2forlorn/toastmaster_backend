@@ -228,16 +228,13 @@ export class AgendaReportService {
         const generalFields = ['wordOfTheDay', 'wordOfTheDayDefinition', 'grammarNotes', 'overallNotes'];
         for (const field of generalFields) {
             if (dto[field] !== undefined) {
-                console.log(`Updating ${field}:`, dto[field]);
+                // console.log(`Updating ${field}:`, dto[field]);
                 report[field] = dto[field];
                 hasChanges = true;
-            } else {
-                console.log(`Field ${field} is undefined in dto`);
-            }
+            } 
         }
 
         // console.log('hasChanges:', hasChanges);
-
         if (!hasChanges) {
             throw new BadRequestException('No data provided to update');
         }
