@@ -128,7 +128,6 @@ export class MeetingService {
       order: {
         date: 'ASC',
       },
-      take: 1,
     });
 
     if (upcomingMeeting.length === 0) {
