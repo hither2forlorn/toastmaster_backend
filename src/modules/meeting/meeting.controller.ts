@@ -20,6 +20,7 @@ import { Roles } from 'src/common/decorators/role.decorator';
 import { ClubRole } from '../club/enum/club-role.enum';
 import { Public } from 'src/common/decorators/public.decorator';
 import { AddMeetingNoteDto } from './dtos/add-note.dto';
+import { UpcomingEventsDTO } from './dtos/get-upcoming-meeting.dto';
 
 @ApiTags('Meetings')
 @Controller('meetings')
@@ -27,11 +28,16 @@ export class MeetingController {
   constructor(private readonly meetingService: MeetingService) {}
 
   @Public()
+  @Get('upcoming')
+  getUpcoming() {
+    return this.meetingService.getUpcomingMeeting();
+  }
+
+  @Public()
   @Get(':id')
   getMeetingById(@Param('id') id: string) {
     return this.meetingService.getMeetingById(id);
   }
-
   @Public()
   @Get('club/:clubId')
   getMeetingsByClub(

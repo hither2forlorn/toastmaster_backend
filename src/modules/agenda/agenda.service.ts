@@ -75,14 +75,11 @@ export class AgendaService {
     const agenda = await this.agendaRepo.findOne({
       where: { id: agendaId },
     });
-
     if (!agenda) {
       throw new BadRequestException('Agenda not found');
     }
-
     return agenda;
   }
-
   async getAllAgendasOfMeeting(meetingId: string): Promise<Agenda[]> {
     return this.agendaRepo.find({
       where: { meetingId },
@@ -133,6 +130,32 @@ export class AgendaService {
     return { message: 'Agenda deleted successfully' };
   }
 
+  async assignRoleToAgenda(
+    agendaId: string,
+    roleName: string,
+  ): Promise<Agenda> {
+    const agenda = await this.getAgendaById(agendaId);
+
+    agenda.roleName = roleName;
+    return this.agendaRepo.save(agenda);
+  }
+  async getRoleCount(memberId: string) {
+    const data = await this.agendaRepo.findAndCount({
+      where: {
+        memberId: memberId,
+      },
+    });
+    return data;
+  }
+  async getMemberRoleCount(memberId: string, role: string) {
+    const data = await this.agendaRepo.findAndCount({
+      where: {
+        memberId: memberId,
+        roleName: role,
+      },
+    });
+    return data;
+  }
   async updateSequenceOfAgendas(meetingId: string, agendaOrder: string[]) {
     const agendas = await this.agendaRepo.find({ where: { meetingId } });
     const agendaMap = new Map(agendas.map((a) => [a.id, a]));
