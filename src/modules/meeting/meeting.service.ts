@@ -120,21 +120,36 @@ export class MeetingService {
 
     return meetings;
   }
-  async getUpcomingMeeting() {
+  async getUpcomingMeeting(
+    page = 1,
+    limit = 10,
+    status?: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
+    const whereClause: any = {};
+    if (status) {
+      whereClause.status = status;
+    }
+    if (startDate && endDate) {
+      whereClause.date = Between(new Date(startDate), new Date(endDate));
+    } else if (startDate) {
+      whereClause.date = MoreThanOrEqual(new Date(startDate));
+    } else if (endDate) {
+      whereClause.date = LessThanOrEqual(new Date(endDate));
+    }
     const upcomingMeeting = await this.meetingRepo.find({
-      where: {
-        date: MoreThanOrEqual(new Date()),
-      },
+      where: whereClause,
+      skip: (page - 1) * limit,
+      take: limit,
       order: {
         date: 'ASC',
       },
     });
-
     if (upcomingMeeting.length === 0) {
-      return null;
+      return [];
     }
-
-    return upcomingMeeting[0];
+    return upcomingMeeting;
   }
 
   async deleteMeeting(id: string) {

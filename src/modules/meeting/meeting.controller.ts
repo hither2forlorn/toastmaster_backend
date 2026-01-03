@@ -29,8 +29,14 @@ export class MeetingController {
 
   @Public()
   @Get('upcoming')
-  getUpcoming() {
-    return this.meetingService.getUpcomingMeeting();
+  getUpcoming(@Query() query: UpcomingEventsDTO) {
+    return this.meetingService.getUpcomingMeeting(
+      query.page,
+      query.limit,
+      query.status,
+      query.startDate,
+      query.endDate,
+    );
   }
 
   @Public()
