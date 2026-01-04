@@ -15,7 +15,6 @@ import { SharedModule } from './common/modules/shared.module';
 import { AgendaTemplateModule } from './modules/agenda-template/agenda-template.module';
 import { AgendaModule } from './modules/agenda/agenda.module';
 import { AgendaReportModule } from './modules/agenda-report/agenda-report.module';
-import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 // Detect environment
 const isProduction = process.env.NODE_ENV === 'production';
@@ -37,7 +36,7 @@ const isProduction = process.env.NODE_ENV === 'production';
     MeetingModule,
     AgendaTemplateModule,
     AgendaModule,
-    AgendaReportModule
+    AgendaReportModule,
   ],
   providers: [
     {
@@ -52,10 +51,6 @@ const isProduction = process.env.NODE_ENV === 'production';
       provide: 'APP_GUARD',
       useClass: JwtGuard,
     },
-    {
-      provide: 'APP_GUARD',
-      useClass: JwtAuthGuard,
-    }
   ],
 })
 export class AppModule {}
