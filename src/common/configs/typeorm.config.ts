@@ -1,0 +1,18 @@
+import 'tsconfig-paths/register';
+import { DataSource } from 'typeorm';
+import { config } from 'dotenv';
+import { join } from 'path';
+
+config();
+
+export default new DataSource({
+  type: 'postgres',
+  url: process.env.DATABASE_URL,
+  entities: [join(__dirname, '../../**/*.entity{.ts,.js}')],
+  migrations: [join(__dirname, '../../migrations/*{.ts,.js}')],
+  ssl: {
+    rejectUnauthorized: false,
+  },
+  synchronize: false,
+  logging: false,
+});
