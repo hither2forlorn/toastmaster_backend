@@ -50,7 +50,7 @@ export class AgendaReportController {
     @Query('memberId') memberId?: string,
   ) {
     return this.agendaReportService.editAgendaReportOfMemberByMemberId(
-      user.id,
+      user?.id,
       reportId,
       dto,
       memberId,
@@ -99,9 +99,22 @@ export class AgendaReportController {
   @ApiBadRequestResponse({
     description: "You don't have access to get this report",
   })
+  @Get(':reportId')
+  getAgendaRepor(@Param('reportId') reportId: string, @GetUser() user: any) {
+    return this.agendaReportService.getAgendaReportByAgendaReportId(reportId);
+  }
+
+  // get report of loggedin user
+  @ApiOperation({ summary: 'Get agenda report of logged in user' })
+  @ApiOkResponse({
+    description: 'Agenda Report has been successfully extracted.',
+  })
+  @ApiBadRequestResponse({
+    description: "You don't have access to get this report",
+  })
   @Get()
   getAgendaReportOfUser(@GetUser() user: any) {
-    return this.agendaReportService.getAgendaReportByMemberId(user.id);
+    return this.agendaReportService.getAgendaReportByMemberId(user?.id);
   }
 
   // delete report by reportId
