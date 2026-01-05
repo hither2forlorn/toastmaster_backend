@@ -9,6 +9,7 @@ import { AgendaReport } from './entities/agenda-report.entity';
 import { Repository } from 'typeorm';
 import { AgendaService } from '../agenda/agenda.service';
 import { CreateAgendaReportDto } from './dtos/agenda-report.dto';
+import { MeetingService } from '../meeting/meeting.service';
 
 @Injectable()
 export class AgendaReportService {
@@ -17,13 +18,15 @@ export class AgendaReportService {
     private readonly agendaReportRepo: Repository<AgendaReport>,
     // @InjectRepository(AgendaTemplateItem) private readonly agendaTempletItemRepo: Repository<AgendaTemplateItem>,
     private readonly agendaService: AgendaService,
+    private readonly meetingService: MeetingService,
   ) {}
 
   async createAgendaReportGrammarian(
-    meetingId,
+    meetingId: string,
     dto: CreateAgendaReportDto,
-    userId,
+    userId: string,
   ): Promise<AgendaReport> {
+    console.log('reach here');
     const agendas = await this.agendaService.getAgendaIdByMeetingId(meetingId);
     if (!agendas || agendas.length === 0) {
       throw new ForbiddenException('No agenda found');
@@ -34,9 +37,9 @@ export class AgendaReportService {
       throw new ForbiddenException('Not your agenda');
     }
 
-    const roleNames = agendas.map((a) =>
-      a.roleName.toUpperCase().replace(' ', '_'),
-    );
+    const roleNames = agendas.map((a) => a.roleName);
+    console.log(roleNames);
+    console.log(dto.reportType);
     if (!roleNames.includes(dto?.reportType.toString())) {
       throw new BadRequestException(
         `${dto?.reportType} role does not create reports`,
@@ -49,8 +52,8 @@ export class AgendaReportService {
     }
 
     if (
-      (dto.reportType === 'GRAMMARIAN' && agenda.roleName !== 'Grammarian') ||
-      (dto.reportType === 'AH_COUNTER' && agenda.roleName !== 'Ah Counter')
+      (dto.reportType === 'Grammarian' && agenda.roleName !== 'Grammarian') ||
+      (dto.reportType === 'Ah Counter' && agenda.roleName !== 'Ah Counter')
     ) {
       throw new BadRequestException(
         'Report type must match your assigned role',
@@ -255,5 +258,48 @@ export class AgendaReportService {
     }
 
     return await this.agendaReportRepo.save(report);
+  }
+
+  async canLoggedInUserCreatOrEditAgendaReport(
+    userId: string,
+    meetingId: string,
+  ): Promise<any> {
+    const report = await this.agendaService.canLoggedInUserCreatReport(
+      userId,
+      meetingId,
+    );
+
+    if (!report) {
+      throw new NotFoundException(
+        'No agenda report found with given meeting id',
+      );
+    }
+
+    const roleType = ['Grammarian', 'Ah Counter'];
+    if (!roleType.includes(report.roleName)) {
+      throw new BadRequestException("Sorry you can't creat this resources");
+    }
+
+    const meetingStatus = ['IN_PROGRESS', 'COMPLETED'];
+    if (!meetingStatus.includes(report?.meeting?.status)) {
+      throw new BadRequestException('Meeting has not started yet');
+    }
+
+    const usersInMeeting =
+      await this.meetingService.getAllMemberOfMeeting(meetingId);
+    if (!usersInMeeting?.club?.members) {
+      throw new NotFoundException('No user in givien meeting');
+    }
+    const canLoggedInUserCreatOrEditAgendaReportReturn = {
+      roleName: report?.roleName,
+      meeting: usersInMeeting?.club?.members.map((i) => ({
+        memberId: i?.id,
+        memberName: i?.memberName,
+        userId: i?.userId,
+        role: i?.role,
+      })),
+    };
+    // console.log(canLoggedInUserCreatOrEditAgendaReportReturn);
+    return canLoggedInUserCreatOrEditAgendaReportReturn;
   }
 }

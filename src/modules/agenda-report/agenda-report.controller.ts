@@ -59,6 +59,26 @@ export class AgendaReportController {
     );
   }
 
+  @ApiOperation({
+    summary: 'Can logged in user Edit or Create agenda report of member',
+  })
+  @ApiCreatedResponse({
+    description: 'Yes logged in user can create or edit Agenda Report.',
+  })
+  @ApiBadRequestResponse({
+    description: "You don't have access to edit this report",
+  })
+  @Get('can-edit/:meetingId')
+  canEditCreateAgendaReportByMemberId(
+    @Param('meetingId') meetingId: string,
+    @GetUser() user: any,
+  ) {
+    return this.agendaReportService.canLoggedInUserCreatOrEditAgendaReport(
+      user?.id,
+      meetingId,
+    );
+  }
+
   // create
   @ApiOperation({ summary: 'Grammerian and ah-report create' })
   @ApiCreatedResponse({

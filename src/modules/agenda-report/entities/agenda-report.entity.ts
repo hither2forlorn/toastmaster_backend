@@ -3,8 +3,8 @@ import { BaseEntity } from 'src/common/entities/base.entity';
 import { Agenda } from 'src/modules/agenda/entities/agenda.entity';
 
 export enum ReportType {
-  GRAMMARIAN = 'GRAMMARIAN',
-  AH_COUNTER = 'AH_COUNTER'
+  GRAMMARIAN = 'Grammarian',
+  AH_COUNTER = 'Ah Counter',
 }
 
 @Entity('agenda_reports')
