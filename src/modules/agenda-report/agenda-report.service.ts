@@ -38,8 +38,8 @@ export class AgendaReportService {
     }
 
     const roleNames = agendas.map((a) => a.roleName);
-    console.log(roleNames);
-    console.log(dto.reportType);
+    // console.log(roleNames);
+    // console.log(dto.reportType);
     if (!roleNames.includes(dto?.reportType.toString())) {
       throw new BadRequestException(
         `${dto?.reportType} role does not create reports`,
@@ -104,14 +104,43 @@ export class AgendaReportService {
   async getAgendaReportByMemberId(memberId: string) {
     const agendaReport = await this.agendaReportRepo.query(
       `
-          select
-          ar.*, a.meeting_id, cm.club_id
-          from agenda_reports ar
-          inner join agendas a on a.id = ar.agenda_id
-          inner join club_member cm on cm.id = a.member_id
-          left join lateral  jsonb_array_elements(ar.member_evaluations) as eval on true
-          left join lateral jsonb_array_elements(ar.filler_word_counts) as filler on true
-          where filler->>'memberId' = $1 or eval->>'memberId' = $1
+      SELECT DISTINCT
+        ar.id,
+        ar.created_at,
+        ar.updated_at,
+        ar.is_deleted,
+        ar.agenda_id,
+        ar.report_type,
+        ar.word_of_the_day,
+        ar.word_of_the_day_definition,
+        ar.grammar_notes,
+        ar.overall_notes,
+        a.meeting_id,
+        cm.club_id,
+        (
+          SELECT jsonb_agg(eval)
+          FROM jsonb_array_elements(ar.member_evaluations) AS eval
+          WHERE eval->>'memberId' = $1
+        ) AS member_evaluations,
+        (
+          SELECT jsonb_agg(filler)
+          FROM jsonb_array_elements(ar.filler_word_counts) AS filler
+          WHERE filler->>'memberId' = $1
+        ) AS filler_word_counts
+      FROM agenda_reports ar
+      INNER JOIN agendas a ON a.id = ar.agenda_id
+      INNER JOIN club_member cm ON cm.id = a.member_id
+      WHERE 
+        EXISTS (
+          SELECT 1 
+          FROM jsonb_array_elements(ar.member_evaluations) AS eval
+          WHERE eval->>'memberId' = $1
+        )
+        OR EXISTS (
+          SELECT 1 
+          FROM jsonb_array_elements(ar.filler_word_counts) AS filler
+          WHERE filler->>'memberId' = $1
+        );
       `,
       [memberId],
     );
@@ -280,7 +309,7 @@ export class AgendaReportService {
       throw new BadRequestException("Sorry you can't creat this resources");
     }
 
-    const meetingStatus = ['IN_PROGRESS', 'COMPLETED'];
+    const meetingStatus = ['SCHEDULED', 'COMPLETED'];
     if (!meetingStatus.includes(report?.meeting?.status)) {
       throw new BadRequestException('Meeting has not started yet');
     }
@@ -290,8 +319,10 @@ export class AgendaReportService {
     if (!usersInMeeting?.club?.members) {
       throw new NotFoundException('No user in givien meeting');
     }
+    // console.log(usersInMeeting)
     const canLoggedInUserCreatOrEditAgendaReportReturn = {
       roleName: report?.roleName,
+      status: usersInMeeting?.status,
       meeting: usersInMeeting?.club?.members.map((i) => ({
         memberId: i?.id,
         memberName: i?.memberName,

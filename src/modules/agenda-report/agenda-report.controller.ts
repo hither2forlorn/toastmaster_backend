@@ -49,12 +49,38 @@ export class AgendaReportController {
     @Body() dto: CreateAgendaReportDto,
     @Query('memberId') memberId?: string,
   ) {
-    console.log(user)
+    // console.log(user)
     return this.agendaReportService.editAgendaReportOfMemberByMemberId(
-      user?.id,
+      user?.sub,
       reportId,
       dto,
       memberId,
+    );
+  }
+
+  // can logged user cerate
+  @ApiOperation({ summary: 'can user create reportr' })
+  @ApiCreatedResponse({
+    description: 'Agenda Report of member has been successfully edited.',
+  })
+  @ApiBadRequestResponse({
+    description: "You don't have access to edit this report",
+  })
+  @ApiQuery({
+    name: 'memberId',
+    required: false,
+    type: String,
+    description: 'Optional member ID to filter the report edit',
+  })
+  @Get('can-edit/:meetingId')
+  canLoggedInUserCreatOrEditReport(
+    @Param('meetingId') meetingId: string,
+    @GetUser() user: any,
+  ) {
+    // console.log(user)
+    return this.agendaReportService.canLoggedInUserCreatOrEditAgendaReport(
+      user?.sub,
+      meetingId,
     );
   }
 
