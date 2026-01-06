@@ -41,7 +41,7 @@ export class AgendaReport extends BaseEntity {
 }
 
 export interface MemberEvaluation {
-  memberId: string;
+  memberId: string | null;
   memberName: string;
   wordUsageCount?: number;
   examples?: string[];

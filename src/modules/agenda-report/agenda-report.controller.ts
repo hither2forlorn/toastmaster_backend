@@ -49,6 +49,7 @@ export class AgendaReportController {
     @Body() dto: CreateAgendaReportDto,
     @Query('memberId') memberId?: string,
   ) {
+    console.log(user)
     return this.agendaReportService.editAgendaReportOfMemberByMemberId(
       user?.id,
       reportId,
@@ -74,7 +75,7 @@ export class AgendaReportController {
     return this.agendaReportService.createAgendaReportGrammarian(
       meetingId,
       dto,
-      user.id,
+      user?.sub,
     );
   }
 
@@ -114,7 +115,8 @@ export class AgendaReportController {
   })
   @Get()
   getAgendaReportOfUser(@GetUser() user: any) {
-    return this.agendaReportService.getAgendaReportByMemberId(user?.id);
+    // console.log(user)
+    return this.agendaReportService.getAgendaReportByMemberId(user?.sub);
   }
 
   // delete report by reportId
@@ -130,7 +132,7 @@ export class AgendaReportController {
     @Param('reportId') reportId: string,
     @GetUser() user: any,
   ) {
-    return this.agendaReportService.deleteAgendaReport(user.id, reportId);
+    return this.agendaReportService.deleteAgendaReport(user?.sub, reportId);
   }
 
   // delete report of specific user
@@ -148,7 +150,7 @@ export class AgendaReportController {
     @GetUser() user: any,
   ) {
     return this.agendaReportService.deleteAgendaReportByMemberId(
-      user.id,
+      user?.sub,
       memberId,
       reportId,
     );
