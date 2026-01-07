@@ -53,12 +53,23 @@ export class ClubService {
     const club = await this.clubRepo.findOne({
       where: { id: clubId },
       relations: ['owner'],
+      select: [
+        'id',
+        'name',
+        'description',
+        'district',
+        'area',
+        'division',
+        'ownerId',
+        'clubCode',
+      ],
     });
-
+    console.log('This is the info of the club ', club);
     if (!club) {
       throw new NotFoundException('Club not found');
     }
 
+    console.log('getting tht info clu', club);
     return club;
   }
 
