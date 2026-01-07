@@ -61,7 +61,6 @@ export class ClubController {
   @Roles(ClubRole.OWNER, ClubRole.ADMIN)
   @Get('/code')
   getJoinCode(@Query('clubId') clubId: string, @Req() req) {
-    console.log('this is clubId', clubId);
     if (!clubId) {
       throw new UnauthorizedException('Club ID is required');
     }
@@ -74,14 +73,12 @@ export class ClubController {
 
     return this.clubService.getJoinCode(clubId);
   }
-
   @UseGuards(MembershipGuard)
   @Post('/code/regenerate')
   regenerateJoinCode(@Query('clubId') clubId: string, @Req() req) {
     if (!clubId) {
       throw new UnauthorizedException('Club ID is required');
     }
-
     if (req.clubRole !== ClubRole.OWNER && req.clubRole !== ClubRole.ADMIN) {
       throw new UnauthorizedException(
         'You are not authorized to regenerate the join code',
@@ -95,6 +92,7 @@ export class ClubController {
   getClubByCode(@Query('code') clubCode: string) {
     return this.clubService.findClubByCode(clubCode);
   }
+  b;
 
   @Get('/stats')
   generateMemberStats(@Query('clubId') clubId: string) {
