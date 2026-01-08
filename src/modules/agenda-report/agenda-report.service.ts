@@ -328,7 +328,7 @@ export class AgendaReportService {
       meeting: allParticipants.map((i) => ({
         memberId: i?.id || null,
         memberName: i?.memberName,
-        userId: i?.member?.id || null,
+        userId: i?.member?.userId || null,
         role: i?.roleName,
       })),
     };
