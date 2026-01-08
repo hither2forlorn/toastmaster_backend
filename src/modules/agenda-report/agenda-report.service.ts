@@ -334,7 +334,7 @@ export class AgendaReportService {
         roleName: report?.roleName,
         status: report?.meeting?.status,
         meeting: null,
-        reportId: isReportExist?.id,
+        report: isReportExist,
       };
       return canLoggedInUserCreatOrEditAgendaReportReturn;
     }
@@ -362,7 +362,7 @@ export class AgendaReportService {
         userId: i?.member?.userId || null,
         role: i?.roleName,
       })),
-      retportId: null,
+      report: null,
     };
     // console.log(canLoggedInUserCreatOrEditAgendaReportReturn);
     return canLoggedInUserCreatOrEditAgendaReportReturn;
