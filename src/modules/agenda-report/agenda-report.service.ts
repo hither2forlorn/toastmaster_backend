@@ -297,7 +297,7 @@ export class AgendaReportService {
       userId,
       meetingId,
     );
-    console.log(report);
+    // console.log(report);
 
     if (!report) {
       throw new NotFoundException(
@@ -315,13 +315,44 @@ export class AgendaReportService {
       throw new BadRequestException('Meeting has not started yet');
     }
 
+    const isReportExist = await this.agendaReportRepo.findOne({
+      where: {
+        agenda: {
+          meetingId: meetingId,
+          member: {
+            userId: userId,
+            isDeleted: false,
+          },
+          isDeleted: false,
+        },
+      },
+      relations: ['agenda', 'agenda.member'],
+    });
+
+    if (isReportExist) {
+      const canLoggedInUserCreatOrEditAgendaReportReturn = {
+        roleName: report?.roleName,
+        status: report?.meeting?.status,
+        meeting: null,
+        reportId: isReportExist?.id,
+      };
+      return canLoggedInUserCreatOrEditAgendaReportReturn;
+    }
+
+    const meetingDateTime = new Date(
+      `${report.meeting.date.toISOString().split('T')[0]}T${report.meeting.time}.000Z`,
+    );
+    if (new Date() < meetingDateTime) {
+      throw new BadRequestException('Meeting has not started yet');
+    }
+
     const allParticipants =
       await this.agendaService.getAllParticipantsOfMeeting(meetingId);
 
     if (!allParticipants) {
       throw new NotFoundException('No user in givien meeting');
     }
-    // console.log(usersInMeeting)
+    // return report;
     const canLoggedInUserCreatOrEditAgendaReportReturn = {
       roleName: report?.roleName,
       status: report?.meeting?.status,
@@ -331,6 +362,7 @@ export class AgendaReportService {
         userId: i?.member?.userId || null,
         role: i?.roleName,
       })),
+      retportId: null,
     };
     // console.log(canLoggedInUserCreatOrEditAgendaReportReturn);
     return canLoggedInUserCreatOrEditAgendaReportReturn;
