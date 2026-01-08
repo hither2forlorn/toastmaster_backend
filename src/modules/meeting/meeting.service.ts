@@ -161,11 +161,4 @@ export class MeetingService {
 
     return { message: 'Meeting deleted successfully' };
   }
-
-  async getAllMemberOfMeeting(meetingId: string): Promise<Meeting | null> {
-    return await this.meetingRepo.findOne({
-      where: { id: meetingId },
-      relations: ['club', 'club.members'],
-    });
-  }
 }

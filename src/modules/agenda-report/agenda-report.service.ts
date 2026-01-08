@@ -130,14 +130,14 @@ export class AgendaReportService {
       FROM agenda_reports ar
       INNER JOIN agendas a ON a.id = ar.agenda_id
       INNER JOIN club_member cm ON cm.id = a.member_id
-      WHERE 
+      WHERE
         EXISTS (
-          SELECT 1 
+          SELECT 1
           FROM jsonb_array_elements(ar.member_evaluations) AS eval
           WHERE eval->>'memberId' = $1
         )
         OR EXISTS (
-          SELECT 1 
+          SELECT 1
           FROM jsonb_array_elements(ar.filler_word_counts) AS filler
           WHERE filler->>'memberId' = $1
         );
@@ -297,6 +297,7 @@ export class AgendaReportService {
       userId,
       meetingId,
     );
+    // console.log(report);
 
     if (!report) {
       throw new NotFoundException(
@@ -314,21 +315,54 @@ export class AgendaReportService {
       throw new BadRequestException('Meeting has not started yet');
     }
 
-    const usersInMeeting =
-      await this.meetingService.getAllMemberOfMeeting(meetingId);
-    if (!usersInMeeting?.club?.members) {
+    const isReportExist = await this.agendaReportRepo.findOne({
+      where: {
+        agenda: {
+          meetingId: meetingId,
+          member: {
+            userId: userId,
+            isDeleted: false,
+          },
+          isDeleted: false,
+        },
+      },
+      relations: ['agenda', 'agenda.member'],
+    });
+
+    if (isReportExist) {
+      const canLoggedInUserCreatOrEditAgendaReportReturn = {
+        roleName: report?.roleName,
+        status: report?.meeting?.status,
+        meeting: null,
+        report: isReportExist,
+      };
+      return canLoggedInUserCreatOrEditAgendaReportReturn;
+    }
+
+    const meetingDateTime = new Date(
+      `${report.meeting.date.toISOString().split('T')[0]}T${report.meeting.time}.000Z`,
+    );
+    if (new Date() < meetingDateTime) {
+      throw new BadRequestException('Meeting has not started yet');
+    }
+
+    const allParticipants =
+      await this.agendaService.getAllParticipantsOfMeeting(meetingId);
+
+    if (!allParticipants) {
       throw new NotFoundException('No user in givien meeting');
     }
-    // console.log(usersInMeeting)
+    // return report;
     const canLoggedInUserCreatOrEditAgendaReportReturn = {
       roleName: report?.roleName,
-      status: usersInMeeting?.status,
-      meeting: usersInMeeting?.club?.members.map((i) => ({
-        memberId: i?.id,
+      status: report?.meeting?.status,
+      meeting: allParticipants.map((i) => ({
+        memberId: i?.id || null,
         memberName: i?.memberName,
-        userId: i?.userId,
-        role: i?.role,
+        userId: i?.member?.userId || null,
+        role: i?.roleName,
       })),
+      report: null,
     };
     // console.log(canLoggedInUserCreatOrEditAgendaReportReturn);
     return canLoggedInUserCreatOrEditAgendaReportReturn;
