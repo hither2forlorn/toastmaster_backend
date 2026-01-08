@@ -130,14 +130,14 @@ export class AgendaReportService {
       FROM agenda_reports ar
       INNER JOIN agendas a ON a.id = ar.agenda_id
       INNER JOIN club_member cm ON cm.id = a.member_id
-      WHERE 
+      WHERE
         EXISTS (
-          SELECT 1 
+          SELECT 1
           FROM jsonb_array_elements(ar.member_evaluations) AS eval
           WHERE eval->>'memberId' = $1
         )
         OR EXISTS (
-          SELECT 1 
+          SELECT 1
           FROM jsonb_array_elements(ar.filler_word_counts) AS filler
           WHERE filler->>'memberId' = $1
         );
@@ -297,6 +297,7 @@ export class AgendaReportService {
       userId,
       meetingId,
     );
+    console.log(report);
 
     if (!report) {
       throw new NotFoundException(
@@ -314,20 +315,21 @@ export class AgendaReportService {
       throw new BadRequestException('Meeting has not started yet');
     }
 
-    const usersInMeeting =
-      await this.meetingService.getAllMemberOfMeeting(meetingId);
-    if (!usersInMeeting?.club?.members) {
+    const allParticipants =
+      await this.agendaService.getAllParticipantsOfMeeting(meetingId);
+
+    if (!allParticipants) {
       throw new NotFoundException('No user in givien meeting');
     }
     // console.log(usersInMeeting)
     const canLoggedInUserCreatOrEditAgendaReportReturn = {
       roleName: report?.roleName,
-      status: usersInMeeting?.status,
-      meeting: usersInMeeting?.club?.members.map((i) => ({
-        memberId: i?.id,
+      status: report?.meeting?.status,
+      meeting: allParticipants.map((i) => ({
+        memberId: i?.id || null,
         memberName: i?.memberName,
-        userId: i?.userId,
-        role: i?.role,
+        userId: i?.member?.id || null,
+        role: i?.roleName,
       })),
     };
     // console.log(canLoggedInUserCreatOrEditAgendaReportReturn);

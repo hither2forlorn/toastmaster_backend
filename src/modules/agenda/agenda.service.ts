@@ -234,4 +234,11 @@ export class AgendaService {
       relations: ['member', 'meeting'],
     });
   }
+
+  async getAllParticipantsOfMeeting(meetingId: string) {
+    return await this.agendaRepo.find({
+      where: { meetingId: meetingId },
+      relations: ['member'],
+    });
+  }
 }
