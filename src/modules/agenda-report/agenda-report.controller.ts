@@ -49,11 +49,38 @@ export class AgendaReportController {
     @Body() dto: CreateAgendaReportDto,
     @Query('memberId') memberId?: string,
   ) {
+    // console.log(user)
     return this.agendaReportService.editAgendaReportOfMemberByMemberId(
-      user.id,
+      user?.sub,
       reportId,
       dto,
       memberId,
+    );
+  }
+
+  // can logged user cerate
+  @ApiOperation({ summary: 'can user create reportr' })
+  @ApiCreatedResponse({
+    description: 'Agenda Report of member has been successfully edited.',
+  })
+  @ApiBadRequestResponse({
+    description: "You don't have access to edit this report",
+  })
+  @ApiQuery({
+    name: 'memberId',
+    required: false,
+    type: String,
+    description: 'Optional member ID to filter the report edit',
+  })
+  @Get('can-edit/:meetingId')
+  canLoggedInUserCreatOrEditReport(
+    @Param('meetingId') meetingId: string,
+    @GetUser() user: any,
+  ) {
+    // console.log(user)
+    return this.agendaReportService.canLoggedInUserCreatOrEditAgendaReport(
+      user?.sub,
+      meetingId,
     );
   }
 
@@ -74,7 +101,7 @@ export class AgendaReportController {
     return this.agendaReportService.createAgendaReportGrammarian(
       meetingId,
       dto,
-      user.id,
+      user?.sub,
     );
   }
 
@@ -99,9 +126,23 @@ export class AgendaReportController {
   @ApiBadRequestResponse({
     description: "You don't have access to get this report",
   })
+  @Get(':reportId')
+  getAgendaRepor(@Param('reportId') reportId: string, @GetUser() user: any) {
+    return this.agendaReportService.getAgendaReportByAgendaReportId(reportId);
+  }
+
+  // get report of loggedin user
+  @ApiOperation({ summary: 'Get agenda report of logged in user' })
+  @ApiOkResponse({
+    description: 'Agenda Report has been successfully extracted.',
+  })
+  @ApiBadRequestResponse({
+    description: "You don't have access to get this report",
+  })
   @Get()
   getAgendaReportOfUser(@GetUser() user: any) {
-    return this.agendaReportService.getAgendaReportByMemberId(user.id);
+    // console.log(user)
+    return this.agendaReportService.getAgendaReportByMemberId(user?.sub);
   }
 
   // delete report by reportId
@@ -117,7 +158,7 @@ export class AgendaReportController {
     @Param('reportId') reportId: string,
     @GetUser() user: any,
   ) {
-    return this.agendaReportService.deleteAgendaReport(user.id, reportId);
+    return this.agendaReportService.deleteAgendaReport(user?.sub, reportId);
   }
 
   // delete report of specific user
@@ -135,7 +176,7 @@ export class AgendaReportController {
     @GetUser() user: any,
   ) {
     return this.agendaReportService.deleteAgendaReportByMemberId(
-      user.id,
+      user?.sub,
       memberId,
       reportId,
     );
