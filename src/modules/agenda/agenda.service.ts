@@ -169,55 +169,28 @@ export class AgendaService {
 
   async getAgendaIdByMeetingId(
     meetingId: string,
-    agendaReport?: boolean,
   ): Promise<GrammarianAgendaData[] | null> {
-    if (agendaReport) {
-      const agenda = await this.agendaRepo
-        .createQueryBuilder('a')
-        .innerJoin('meetings', 'm', 'm.id = a.meeting_id')
-        .innerJoin('club_member', 'cm', 'cm.id = a.member_id')
-        .innerJoin('agenda_reports', 'ar', 'ar.agenda_id = a.id')
-        .select('a.id', 'agendaId')
-        .addSelect('a.member_id', 'memberId')
-        .addSelect('ar.id', 'reportId')
-        .addSelect('cm.user_id', 'userId')
-        .addSelect('a.role_name', 'roleName')
-        .where('m.id = :meetingId', { meetingId })
-        .andWhere('a.role_name IN (:...roles)', {
-          roles: ['Grammarian', 'Ah Counter'],
-        })
-        .getRawMany();
+    const agenda = await this.agendaRepo
+      .createQueryBuilder('a')
+      .innerJoin('meetings', 'm', 'm.id = a.meeting_id')
+      .innerJoin('club_member', 'cm', 'cm.id = a.member_id')
+      .select('a.id', 'agendaId')
+      .addSelect('a.member_id', 'memberId')
+      .addSelect('cm.user_id', 'userId')
+      .addSelect('a.role_name', 'roleName')
+      .where('m.id = :meetingId', { meetingId })
+      .andWhere('a.role_name IN (:...roles)', {
+        roles: ['Grammarian', 'Ah Counter'],
+      })
+      .getRawMany();
 
-      if (agenda.length === 0) {
-        throw new BadRequestException(
-          'Agenda with Grammarian or ah counter role in given meeting not found',
-        );
-      }
-
-      return agenda;
-    } else {
-      const agenda = await this.agendaRepo
-        .createQueryBuilder('a')
-        .innerJoin('meetings', 'm', 'm.id = a.meeting_id')
-        .innerJoin('club_member', 'cm', 'cm.id = a.member_id')
-        .select('a.id', 'agendaId')
-        .addSelect('a.member_id', 'memberId')
-        .addSelect('cm.user_id', 'userId')
-        .addSelect('a.role_name', 'roleName')
-        .where('m.id = :meetingId', { meetingId })
-        .andWhere('a.role_name IN (:...roles)', {
-          roles: ['Grammarian', 'Ah Counter'],
-        })
-        .getRawMany();
-
-      if (!agenda) {
-        throw new BadRequestException(
-          'Agenda with Grammarian role in given meeting not found',
-        );
-      }
-
-      return agenda;
+    if (!agenda) {
+      throw new BadRequestException(
+        'Agenda with Grammarian role in given meeting not found',
+      );
     }
+
+    return agenda;
   }
 
   async canLoggedInUserCreatReport(

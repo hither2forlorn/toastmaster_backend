@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AgendaReport } from './entities/agenda-report.entity';
+import { AgendaReport, ReportType } from './entities/agenda-report.entity';
 import { Repository } from 'typeorm';
 import { AgendaService } from '../agenda/agenda.service';
 import { CreateAgendaReportDto } from './dtos/agenda-report.dto';
@@ -26,43 +26,40 @@ export class AgendaReportService {
     dto: CreateAgendaReportDto,
     userId: string,
   ): Promise<AgendaReport> {
-    console.log('reach here');
-    const agendas = await this.agendaService.getAgendaIdByMeetingId(meetingId);
-    if (!agendas || agendas.length === 0) {
-      throw new ForbiddenException('No agenda found');
-    }
-
-    const userIds = agendas.map((a) => a.userId);
-    if (!userIds.includes(userId)) {
-      throw new ForbiddenException('Not your agenda');
-    }
-
-    const roleNames = agendas.map((a) => a.roleName);
-    // console.log(roleNames);
-    // console.log(dto.reportType);
-    if (!roleNames.includes(dto?.reportType.toString())) {
-      throw new BadRequestException(
-        `${dto?.reportType} role does not create reports`,
-      );
-    }
-
-    const agenda = agendas.find((a) => a.userId === userId);
-    if (!agenda) {
-      throw new ForbiddenException('Not your agenda');
-    }
-
+    // console.log('dto :: ', dto);
     if (
-      (dto.reportType === 'Grammarian' && agenda.roleName !== 'Grammarian') ||
-      (dto.reportType === 'Ah Counter' && agenda.roleName !== 'Ah Counter')
+      dto.reportType !== ReportType.GRAMMARIAN &&
+      dto.reportType !== ReportType.AH_COUNTER
     ) {
       throw new BadRequestException(
         'Report type must match your assigned role',
       );
     }
+    const agendas = await this.agendaService.getAgendaIdByMeetingId(meetingId);
+    if (!agendas || agendas.length === 0) {
+      throw new ForbiddenException('No agenda found');
+    }
+
+    // console.log('agendas :: ', agendas);
+    const user = agendas.find((a) => a.userId === userId);
+    if (!user) {
+      throw new ForbiddenException('Not your agenda');
+    }
+    console.log('userids :: ', user);
+
+    const roleNames = ['Ah Counter', 'Grammarian'];
+    // console.log(roleNames);
+    // console.log(dto.reportType);
+    if (!roleNames.includes(user?.roleName)) {
+      throw new BadRequestException(
+        `${dto?.reportType} role does not create reports`,
+      );
+    }
 
     let report = await this.agendaReportRepo.findOne({
-      where: { agendaId: agenda.agendaId },
+      where: { agendaId: user?.agendaId },
     });
+    // console.log('report :: ', report);
 
     if (report) {
       if (dto.memberEvaluations && dto.memberEvaluations?.length !== 0) {
@@ -82,14 +79,15 @@ export class AgendaReportService {
       throw new BadRequestException('Agenda Report creation fail');
     } else {
       report = this.agendaReportRepo.create({
-        agendaId: agenda.agendaId,
+        agendaId: user?.agendaId,
         ...dto,
       });
+      // console.log('not reach here', report);
       return await this.agendaReportRepo.save(report);
     }
   }
 
-  async getAgendaReportByAgendaReportId(agendaReportId) {
+  async getAgendaReportByAgendaReportId(agendaReportId: string) {
     const agendaReport = await this.agendaReportRepo.findOne({
       where: { id: agendaReportId },
     });
