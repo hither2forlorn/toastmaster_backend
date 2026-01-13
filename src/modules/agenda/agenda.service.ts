@@ -20,7 +20,6 @@ export class AgendaService {
     private readonly memberService: ClubMemberService,
   ) { }
 
-
   // utils function
   private validateMemberInput(data: CreateAgendaDto) {
     if (!data.memberId && !data.memberName) {
@@ -172,8 +171,10 @@ export class AgendaService {
     return { message: 'Agenda reordered successfully' };
   }
 
-
-  async getAgendaIdByMeetingId(meetingId: string, agendaReport?: Boolean): Promise<GrammarianAgendaData[] | null> {
+  async getAgendaIdByMeetingId(
+    meetingId: string,
+    agendaReport?: boolean,
+  ): Promise<GrammarianAgendaData[] | null> {
     if (agendaReport) {
       const agenda = await this.agendaRepo
         .createQueryBuilder('a')
@@ -186,11 +187,15 @@ export class AgendaService {
         .addSelect('cm.user_id', 'userId')
         .addSelect('a.role_name', 'roleName')
         .where('m.id = :meetingId', { meetingId })
-        .andWhere('a.role_name IN (:...roles)', { roles: ['Grammarian', 'Ah Counter'] })
+        .andWhere('a.role_name IN (:...roles)', {
+          roles: ['Grammarian', 'Ah Counter'],
+        })
         .getRawMany();
 
       if (agenda.length === 0) {
-        throw new BadRequestException('Agenda with Grammarian or ah counter role in given meeting not found');
+        throw new BadRequestException(
+          'Agenda with Grammarian or ah counter role in given meeting not found',
+        );
       }
 
       return agenda;
@@ -204,15 +209,40 @@ export class AgendaService {
         .addSelect('cm.user_id', 'userId')
         .addSelect('a.role_name', 'roleName')
         .where('m.id = :meetingId', { meetingId })
-        .andWhere('a.role_name IN (:...roles)', { roles: ['Grammarian', 'Ah Counter'] })
+        .andWhere('a.role_name IN (:...roles)', {
+          roles: ['Grammarian', 'Ah Counter'],
+        })
         .getRawMany();
 
       if (!agenda) {
-        throw new BadRequestException('Agenda with Grammarian role in given meeting not found');
+        throw new BadRequestException(
+          'Agenda with Grammarian role in given meeting not found',
+        );
       }
 
       return agenda;
     }
   }
 
+  async canLoggedInUserCreatReport(
+    userId: string,
+    meetingId: string,
+  ): Promise<Agenda | null> {
+    return await this.agendaRepo.findOne({
+      where: {
+        meetingId: meetingId,
+        member: {
+          userId,
+        },
+      },
+      relations: ['member', 'meeting'],
+    });
+  }
+
+  async getAllParticipantsOfMeeting(meetingId: string) {
+    return await this.agendaRepo.find({
+      where: { meetingId: meetingId },
+      relations: ['member'],
+    });
+  }
 }
