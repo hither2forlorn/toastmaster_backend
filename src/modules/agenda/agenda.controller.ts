@@ -29,7 +29,7 @@ import { AssignRoleDto, ReorderAgendaDto } from './dtos/agenda.dto';
 @Roles(ClubRole.OWNER, ClubRole.ADMIN)
 @Controller('agenda')
 export class AgendaController {
-  constructor(private readonly agendaService: AgendaService) {}
+  constructor(private readonly agendaService: AgendaService) { }
 
   @Post('/create')
   @ApiOperation({ summary: 'Create a new agenda item' })
@@ -47,10 +47,13 @@ export class AgendaController {
   }
 
   @Public()
-  @Get('/role-counts')
-  @ApiOperation({ summary: 'Get role counts for all members' })
-  async getRoleCounts() {
-    return this.agendaService.getRoleCounts();
+  @Get('/role-counts/club/:clubId')
+  @ApiOperation({ summary: 'Get role counts for selected club member' })
+  @ApiParam({ name: 'clubId', description: 'Club ID' })
+  async getRoleCounts(@Param('clubId') clubId: string) {
+    const rolecount_forClub = await this.agendaService.getRoleCounts(clubId);
+    console.log('This is the role count of the club member');
+    return rolecount_forClub;
   }
 
   @Public()

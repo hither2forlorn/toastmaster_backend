@@ -18,7 +18,7 @@ export class AgendaService {
   constructor(
     @InjectRepository(Agenda) private readonly agendaRepo: Repository<Agenda>,
     private readonly memberService: ClubMemberService,
-  ) {}
+  ) { }
 
   // utils function
   private validateMemberInput(data: CreateAgendaDto) {
@@ -138,12 +138,14 @@ export class AgendaService {
     agenda.roleName = roleName;
     return this.agendaRepo.save(agenda);
   }
-  async getRoleCounts() {
+  async getRoleCounts(clubId: string) {
     const roleCounts = await this.agendaRepo
       .createQueryBuilder('agenda')
+      .innerJoin('agenda.meeting', 'meeting')
       .select('agenda.roleName', 'role')
       .addSelect('agenda.memberName', 'memberName')
       .addSelect('COUNT(agenda.roleName)', 'count')
+      .where('meeting.clubId = :clubId', { clubId })
       .groupBy('agenda.roleName')
       .addGroupBy('agenda.memberName')
       .getRawMany();
