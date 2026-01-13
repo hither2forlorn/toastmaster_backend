@@ -151,9 +151,11 @@ export class AgendaService {
       .addGroupBy('agenda.memberName')
       .getRawMany();
 
-    return roleCounts.map(
-      (item) => `${item.count} : ${item.role} : ${item.memberName}`,
-    );
+    return roleCounts.map((item) => ({
+      role: item.role,
+      memberName: item.memberName,
+      count: parseInt(item.count, 10),
+    }));
   }
   async updateSequenceOfAgendas(meetingId: string, agendaOrder: string[]) {
     const agendas = await this.agendaRepo.find({ where: { meetingId } });
