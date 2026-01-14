@@ -8,7 +8,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AgendaReport, ReportType } from './entities/agenda-report.entity';
 import { Repository } from 'typeorm';
 import { AgendaService } from '../agenda/agenda.service';
-import { CreateAgendaReportDto } from './dtos/agenda-report.dto';
+import {
+  CreateAgendaReportDto,
+  MemberEvaluationDto,
+} from './dtos/agenda-report.dto';
 import { MeetingService } from '../meeting/meeting.service';
 
 @Injectable()
@@ -324,10 +327,42 @@ export class AgendaReportService {
           isDeleted: false,
         },
       },
-      relations: ['agenda', 'agenda.member'],
+      // relations: ['agenda', 'agenda.member'],
     });
+    // return isReportExist;
+
+    const allParticipants =
+      await this.agendaService.getAllParticipantsOfMeeting(meetingId);
+
+    if (!allParticipants) {
+      throw new NotFoundException('No user in givien meeting');
+    }
+    // return allParticipants;
 
     if (isReportExist) {
+      const memberIdRoleMap = new Map<string, string>();
+      allParticipants.forEach((m) => {
+        if (m?.memberId && m?.roleName) {
+          memberIdRoleMap.set(m.memberId, m.roleName);
+        }
+      });
+
+      if (isReportExist?.memberEvaluations) {
+        isReportExist?.memberEvaluations.forEach((m: MemberEvaluationDto) => {
+          const role = memberIdRoleMap.get(m?.memberId);
+          if (role) {
+            m.role = role;
+          }
+        });
+      } else if (isReportExist?.fillerWordCounts) {
+        isReportExist?.fillerWordCounts.forEach((m: MemberEvaluationDto) => {
+          const role = memberIdRoleMap.get(m?.memberId);
+          if (role) {
+            m.role = role;
+          }
+        });
+      }
+
       const canLoggedInUserCreatOrEditAgendaReportReturn = {
         roleName: report?.roleName,
         status: report?.meeting?.status,
@@ -344,12 +379,6 @@ export class AgendaReportService {
       throw new BadRequestException('Meeting has not started yet');
     }
 
-    const allParticipants =
-      await this.agendaService.getAllParticipantsOfMeeting(meetingId);
-
-    if (!allParticipants) {
-      throw new NotFoundException('No user in givien meeting');
-    }
     // return report;
     const canLoggedInUserCreatOrEditAgendaReportReturn = {
       roleName: report?.roleName,

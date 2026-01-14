@@ -32,6 +32,11 @@ export class MemberEvaluationDto {
   @IsOptional()
   @IsString()
   grammarIssues?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  role?: string;
 }
 
 export class FillerWordCountDto {
@@ -63,6 +68,11 @@ export class FillerWordCountDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  role?: string;
 }
 
 export class CreateAgendaReportDto {
