@@ -94,6 +94,10 @@ export class AgendaReportService {
       }
       throw new BadRequestException('Agenda Report creation fail');
     } else {
+      const isStatusChanged = await this.meetingService.changeStatus(meetingId);
+      if (!isStatusChanged) {
+        throw new NotFoundException('Status not change of given meeting id.');
+      }
       report = this.agendaReportRepo.create({
         agendaId: user?.agendaId,
         ...dto,

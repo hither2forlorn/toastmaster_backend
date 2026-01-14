@@ -161,4 +161,10 @@ export class MeetingService {
 
     return { message: 'Meeting deleted successfully' };
   }
+
+  async changeStatus(id: string) {
+    return await this.meetingRepo.update(id, {
+      status: MEETING_STATUS.COMPLETED,
+    });
+  }
 }
