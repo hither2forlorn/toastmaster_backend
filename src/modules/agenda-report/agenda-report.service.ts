@@ -48,7 +48,7 @@ export class AgendaReportService {
     if (!user) {
       throw new ForbiddenException('Not your agenda');
     }
-    console.log('userids :: ', user);
+    // console.log('userids :: ', user);
 
     const roleNames = ['Ah Counter', 'Grammarian'];
     // console.log(roleNames);
@@ -65,6 +65,19 @@ export class AgendaReportService {
     // console.log('report :: ', report);
 
     if (report) {
+      if (dto.wordOfTheDay !== undefined) {
+        report.wordOfTheDay = dto.wordOfTheDay;
+      }
+      if (dto.wordOfTheDayDefinition !== undefined) {
+        report.wordOfTheDayDefinition = dto.wordOfTheDayDefinition;
+      }
+      if (dto.grammarNotes !== undefined) {
+        report.grammarNotes = dto.grammarNotes;
+      }
+      if (dto.overallNotes !== undefined) {
+        report.overallNotes = dto.overallNotes;
+      }
+
       if (dto.memberEvaluations && dto.memberEvaluations?.length !== 0) {
         if (!report.memberEvaluations) {
           report.memberEvaluations = [];
