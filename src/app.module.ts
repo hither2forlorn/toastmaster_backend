@@ -15,6 +15,7 @@ import { SharedModule } from './common/modules/shared.module';
 import { AgendaTemplateModule } from './modules/agenda-template/agenda-template.module';
 import { AgendaModule } from './modules/agenda/agenda.module';
 import { AgendaReportModule } from './modules/agenda-report/agenda-report.module';
+import { SeederService } from './database/seeder/seeder.service';
 
 // Detect environment
 const isProduction = process.env.NODE_ENV === 'production';
@@ -51,6 +52,7 @@ const isProduction = process.env.NODE_ENV === 'production';
       provide: 'APP_GUARD',
       useClass: JwtGuard,
     },
+    SeederService,
   ],
 })
 export class AppModule {}
