@@ -3,24 +3,13 @@ import { registerAs } from '@nestjs/config';
 export const DATABASE_CONFIG_KEY = 'database';
 
 export interface DatabaseConfig {
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-  database: string;
+  url: string;
   synchronize: boolean;
   logging: boolean;
 }
 
-export const databaseConfig = registerAs<DatabaseConfig>(
-  DATABASE_CONFIG_KEY,
-  () => ({
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5432', 10),
-    username: process.env.DB_USERNAME || 'user',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || '',
-    synchronize: process.env.DB_SYNCHRONIZE === 'true',
-    logging: process.env.DB_LOGGING === 'true',
-  }),
-);
+export const databaseConfig = registerAs(DATABASE_CONFIG_KEY, () => ({
+  url: process.env.DATABASE_URL,
+  synchronize: process.env.DB_SYNCHRONIZE === 'true',
+  logging: process.env.DB_LOGGING === 'true',
+}));

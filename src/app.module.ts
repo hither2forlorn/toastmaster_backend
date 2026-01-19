@@ -20,37 +20,37 @@ import { AgendaReportModule } from './modules/agenda-report/agenda-report.module
 const isProduction = process.env.NODE_ENV === 'production';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: isProduction ? undefined : '.env',
-      cache: true,
-      load: [serverConfig, databaseConfig, tokenConfig],
-    }),
-    TypeOrmModule.forRootAsync({
-      useClass: isProduction ? DatabaseProductionFactory : DatabaseFactory,
-      inject: [ConfigService],
-    }),
-    SharedModule,
-    ClubModule,
-    MeetingModule,
-    AgendaTemplateModule,
-    AgendaModule,
-    AgendaReportModule,
-  ],
-  providers: [
-    {
-      provide: 'APP_FILTER',
-      useClass: GlobalExceptionFilter,
-    },
-    {
-      provide: 'APP_INTERCEPTOR',
-      useClass: ResponseInterceptor,
-    },
-    {
-      provide: 'APP_GUARD',
-      useClass: JwtGuard,
-    },
-  ],
+	imports: [
+		ConfigModule.forRoot({
+			isGlobal: true,
+			envFilePath: isProduction ? '.env' : '.env',
+			cache: true,
+			load: [serverConfig, databaseConfig, tokenConfig],
+		}),
+		TypeOrmModule.forRootAsync({
+			useClass: isProduction ? DatabaseProductionFactory : DatabaseFactory,
+			inject: [ConfigService],
+		}),
+		SharedModule,
+		ClubModule,
+		MeetingModule,
+		AgendaTemplateModule,
+		AgendaModule,
+		AgendaReportModule,
+	],
+	providers: [
+		{
+			provide: 'APP_FILTER',
+			useClass: GlobalExceptionFilter,
+		},
+		{
+			provide: 'APP_INTERCEPTOR',
+			useClass: ResponseInterceptor,
+		},
+		{
+			provide: 'APP_GUARD',
+			useClass: JwtGuard,
+		},
+	],
 })
-export class AppModule {}
+export class AppModule { }

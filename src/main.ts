@@ -1,3 +1,4 @@
+console.log('Application starting...');
 import { SERVER_CONFIG_KEY, ServerConfig } from './config/server.config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -7,7 +8,9 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 async function server() {
+  console.log('Creating NestJS application...');
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  console.log('NestJS application created.');
 
   const configService = app.get(ConfigService);
   const serverConfig = configService.get<ServerConfig>(SERVER_CONFIG_KEY);

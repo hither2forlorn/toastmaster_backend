@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import {
+  DATABASE_CONFIG_KEY,
+  DatabaseConfig,
+} from 'src/config/database.config';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 
 @Injectable()
@@ -9,20 +13,24 @@ export class DatabaseProductionFactory implements TypeOrmOptionsFactory {
   createTypeOrmOptions(
     connectionName?: string,
   ): Promise<TypeOrmModuleOptions> | TypeOrmModuleOptions {
-    // Get DATABASE_URL from environment (Supabase connection string)
-    const databaseUrl = this.configService.get<string>('DATABASE_URL');
+    const dbConfig =
+      this.configService.getOrThrow<DatabaseConfig>(DATABASE_CONFIG_KEY);
 
-    if (!databaseUrl) {
+    const { url } = dbConfig;
+
+    if (!url) {
       throw new Error(
         'DATABASE_URL environment variable is required for production',
       );
     }
 
+    console.log('Connecting to database with URL:', url);
+
     return {
       type: 'postgres',
-      url: databaseUrl,
+      url,
       synchronize: false, // Never auto-sync in production!
-      logging: false,
+      logging: true,
       entities: [__dirname + '/../**/*.entity{.ts,.js}'],
       ssl: {
         rejectUnauthorized: false, // Required for Supabase, Render, etc.
