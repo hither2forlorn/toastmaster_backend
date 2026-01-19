@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { MeetingService } from './meeting.service';
 import { CreateMeetingDto } from './dtos/create-meeting.dto';
 import { UpdateMeetingDto } from './dtos/update-meeting.dto';
@@ -37,6 +37,29 @@ export class MeetingController {
       query.startDate,
       query.endDate,
     );
+  }
+
+  @Public()
+  @Get('/select-agenda')
+  @ApiOperation({ summary: 'Select agenda from pre-existing agenda' })
+  @ApiQuery({
+    name: 'page',
+    // required: false,
+    description: 'Page number',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    // required: false,
+    description: 'Items per page',
+    example: 10,
+  })
+  async getAllMeetingToSelectIt(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ) {
+    // console.log('from controller');
+    return this.meetingService.getAllMeetingToSelectIt(page, limit);
   }
 
   @Public()

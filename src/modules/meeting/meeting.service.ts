@@ -167,4 +167,30 @@ export class MeetingService {
       status: MEETING_STATUS.COMPLETED,
     });
   }
+
+  async getAllMeetingToSelectIt(page: number, limit: number) {
+    const [allMeeting, total] = await this.meetingRepo.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      relations: ['agendas'],
+    });
+
+    if (allMeeting.length === 0) {
+      throw new NotFoundException('Meeting not found');
+    }
+
+    const updatedData = allMeeting.map((m) => ({
+      theme: m?.theme,
+      time: m?.time,
+      notes: m?.notes,
+      agendas: m?.agendas.map((a) => ({
+        title: a?.title,
+        roleName: a?.roleName,
+        duration: a?.duration,
+        sequence: a?.sequence,
+        notes: a?.notes,
+      })),
+    }));
+    return { data: updatedData, total, page, limit };
+  }
 }
