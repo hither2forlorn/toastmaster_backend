@@ -231,7 +231,7 @@ export class MeetingService {
 
         await transactionalEntityManager.save(agendaEntities);
 
-        return 'success';
+        return { clubId: meetingData.clubId };
       },
     );
   }
