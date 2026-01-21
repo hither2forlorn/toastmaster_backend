@@ -9,7 +9,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { MeetingService } from './meeting.service';
 import { CreateMeetingDto } from './dtos/create-meeting.dto';
 import { UpdateMeetingDto } from './dtos/update-meeting.dto';
@@ -21,6 +26,7 @@ import { ClubRole } from '../club/enum/club-role.enum';
 import { Public } from 'src/common/decorators/public.decorator';
 import { AddMeetingNoteDto } from './dtos/add-note.dto';
 import { UpcomingEventsDTO } from './dtos/get-upcoming-meeting.dto';
+import { CreateMeetingWithTemplateDto } from './dtos/create-with-templete';
 
 @ApiTags('Meetings')
 @Controller('meetings')
@@ -37,6 +43,29 @@ export class MeetingController {
       query.startDate,
       query.endDate,
     );
+  }
+
+  @Public()
+  @Get('/select-agenda')
+  @ApiOperation({ summary: 'Select agenda from pre-existing agenda' })
+  @ApiQuery({
+    name: 'page',
+    // required: false,
+    description: 'Page number',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    // required: false,
+    description: 'Items per page',
+    example: 10,
+  })
+  async getAllMeetingToSelectIt(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ) {
+    // console.log('from controller');
+    return this.meetingService.getAllMeetingToSelectIt(page, limit);
   }
 
   @Public()
@@ -101,5 +130,13 @@ export class MeetingController {
   @Delete(':id')
   deleteMeeting(@Param('id') id: string) {
     return this.meetingService.deleteMeeting(id);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(MembershipGuard)
+  @Roles(ClubRole.OWNER, ClubRole.ADMIN)
+  @Post('create-with-templet')
+  createMeetingWithTemplate(@Body() data: CreateMeetingWithTemplateDto) {
+    return this.meetingService.createMeetingUsingTemplet(data);
   }
 }
