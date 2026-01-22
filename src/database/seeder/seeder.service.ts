@@ -33,13 +33,40 @@ export class SeederService {
     if (process.env.NODE_ENV !== 'development') {
       throw new Error('Seeding is only allowed in development environment!');
     }
-    // Clear existing data
-    await this.agendaReportRepository.delete({});
-    await this.agendaRepository.delete({});
-    await this.meetingRepository.delete({});
-    await this.clubMemberRepository.delete({});
-    await this.clubRepository.delete({});
-    await this.userRepository.delete({});
+
+    // Clear existing data in correct order (child tables first)
+    console.log('🧹 Clearing existing data...');
+
+    // Start with the most dependent tables
+    const existingReports = await this.agendaReportRepository.find();
+    if (existingReports.length > 0) {
+      await this.agendaReportRepository.remove(existingReports);
+    }
+
+    const existingAgendas = await this.agendaRepository.find();
+    if (existingAgendas.length > 0) {
+      await this.agendaRepository.remove(existingAgendas);
+    }
+
+    const existingMeetings = await this.meetingRepository.find();
+    if (existingMeetings.length > 0) {
+      await this.meetingRepository.remove(existingMeetings);
+    }
+
+    const existingMembers = await this.clubMemberRepository.find();
+    if (existingMembers.length > 0) {
+      await this.clubMemberRepository.remove(existingMembers);
+    }
+
+    const existingClubs = await this.clubRepository.find();
+    if (existingClubs.length > 0) {
+      await this.clubRepository.remove(existingClubs);
+    }
+
+    const existingUsers = await this.userRepository.find();
+    if (existingUsers.length > 0) {
+      await this.userRepository.remove(existingUsers);
+    }
 
     console.log('🌱 Starting database seeding...');
 
@@ -231,7 +258,6 @@ export class SeederService {
         memberId: '11111111-1111-1111-1111-111111111111',
         memberName: 'one andonly',
         isGuest: false,
-        date: new Date('2025-12-15'),
         notes: 'Great energy throughout',
       },
       {
@@ -244,7 +270,6 @@ export class SeederService {
         memberId: '22222222-2222-2222-2222-222222222222',
         memberName: 'two andonly',
         isGuest: false,
-        date: new Date('2025-12-15'),
         notes: 'Word of the day: Resilience',
       },
       {
@@ -257,7 +282,6 @@ export class SeederService {
         memberId: '33333333-3333-3333-3333-333333333333',
         memberName: 'Guest Speaker Ram',
         isGuest: true,
-        date: new Date('2025-12-15'),
         notes: 'Tracked filler words effectively',
       },
     ];
@@ -277,7 +301,7 @@ export class SeederService {
         grammarNotes: 'Overall excellent grammar usage by all speakers',
         memberEvaluations: [
           {
-            memberId: '11111111-1111-1111-1111-111111111111',
+            memberId: 'ff33b027-150f-4d12-a583-6e0ac79bbfcf',
             memberName: 'one andonly',
             wordUsageCount: 3,
             examples: [
@@ -297,7 +321,7 @@ export class SeederService {
         reportType: ReportType.AH_COUNTER,
         fillerWordCounts: [
           {
-            memberId: '11111111-1111-1111-1111-111111111111',
+            memberId: 'ff33b027-150f-4d12-a583-6e0ac79bbfcf',
             memberName: 'one andonly',
             ahs: 2,
             ums: 1,
@@ -306,7 +330,7 @@ export class SeederService {
             notes: 'Very controlled speaking, minimal filler words',
           },
           {
-            memberId: '22222222-2222-2222-2222-222222222222',
+            memberId: '73ee9ae1-0ebd-4552-bc67-827b044192dc',
             memberName: 'two andonly',
             ahs: 5,
             ums: 3,
