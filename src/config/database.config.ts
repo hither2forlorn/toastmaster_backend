@@ -8,8 +8,11 @@ export interface DatabaseConfig {
   logging: boolean;
 }
 
+const env = process.env.NODE_ENV ?? 'production';
+const isProd = env === 'production';
+
 export const databaseConfig = registerAs(DATABASE_CONFIG_KEY, () => ({
   url: process.env.DATABASE_URL,
-  synchronize: process.env.DB_SYNCHRONIZE === 'true',
+  synchronize: !isProd && process.env.DB_SYNCHRONIZE === 'true',
   logging: process.env.DB_LOGGING === 'true',
 }));
