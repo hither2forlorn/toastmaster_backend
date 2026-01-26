@@ -10,9 +10,10 @@ export default new DataSource({
   url: process.env.DATABASE_URL,
   entities: [join(__dirname, '../../**/*.entity{.ts,.js}')],
   migrations: [join(__dirname, '../../migrations/*{.ts,.js}')],
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl:
+    process.env.NODE_ENV === 'production'
+      ? { rejectUnauthorized: false }
+      : false,
   synchronize: false,
   logging: false,
 });
