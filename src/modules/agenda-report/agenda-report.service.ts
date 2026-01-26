@@ -13,6 +13,7 @@ import {
   MemberEvaluationDto,
 } from './dtos/agenda-report.dto';
 import { MeetingService } from '../meeting/meeting.service';
+import { MembershipStatus } from '../club/enum/club-members.enum';
 
 @Injectable()
 export class AgendaReportService {
@@ -149,6 +150,7 @@ export class AgendaReportService {
       INNER JOIN agendas a ON a.id = ar.agenda_id
       INNER JOIN club_member cm ON cm.id = a.member_id
       WHERE
+      cm.status = 'active' AND
         EXISTS (
           SELECT 1
           FROM jsonb_array_elements(ar.member_evaluations) AS eval
@@ -180,6 +182,7 @@ export class AgendaReportService {
       .select('ar.id', 'reportId')
       .addSelect('cm.user_id', 'userId')
       .where('ar.id = :reportId', { reportId })
+      .andWhere('cm.status = :status', { status: MembershipStatus.ACTIVE })
       .getRawOne();
 
     if (!reportData) {

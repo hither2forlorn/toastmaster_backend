@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { CreateAgendaDto } from './dtos/create-agenda.dto';
 import { ClubMemberService } from '../club/club-member.service';
 import { ClubService } from '../club/club.service';
+import { MembershipStatus } from '../club/enum/club-members.enum';
 
 export interface GrammarianAgendaData {
   agendaId: string;
@@ -18,7 +19,7 @@ export class AgendaService {
   constructor(
     @InjectRepository(Agenda) private readonly agendaRepo: Repository<Agenda>,
     private readonly memberService: ClubMemberService,
-  ) { }
+  ) {}
 
   // utils function
   private validateMemberInput(data: CreateAgendaDto) {
@@ -186,6 +187,7 @@ export class AgendaService {
       .andWhere('a.role_name IN (:...roles)', {
         roles: ['Grammarian', 'Ah Counter'],
       })
+      .andWhere('cm.status = :status', { status: MembershipStatus.ACTIVE })
       .getRawMany();
 
     if (!agenda) {

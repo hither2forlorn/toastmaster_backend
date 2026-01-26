@@ -3,6 +3,7 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dtos/user.dto';
+import { MembershipStatus } from '../club/enum/club-members.enum';
 
 @Injectable()
 export class UserService {
@@ -31,7 +32,12 @@ export class UserService {
   async getProfile(userId: string) {
     const user = await this.userRepo
       .createQueryBuilder('user')
-      .leftJoin('user.memberships', 'membership')
+      .leftJoin(
+        'user.memberships',
+        'membership',
+        'membership.status = :status',
+        { status: MembershipStatus.ACTIVE },
+      )
       .leftJoin('membership.club', 'club')
       .leftJoin('user.ownedClubs', 'ownedClub')
       .select([
@@ -78,10 +84,18 @@ export class UserService {
   }
 
   async getUserClubs(userId: string) {
-    const user = await this.userRepo.findOne({
-      where: { id: userId },
-      relations: ['memberships', 'memberships.club', 'ownedClubs'],
-    });
+    const user = await this.userRepo
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.ownedClubs', 'ownedClubs')
+      .leftJoinAndSelect(
+        'user.memberships',
+        'memberships',
+        'memberships.status = :status',
+        { status: MembershipStatus.ACTIVE },
+      )
+      .leftJoinAndSelect('memberships.club', 'club')
+      .where('user.id = :userId', { userId })
+      .getOne();
 
     if (!user) {
       throw new BadRequestException('User not found');

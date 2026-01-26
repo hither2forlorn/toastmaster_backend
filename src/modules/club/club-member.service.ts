@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { ClubRole } from './enum/club-role.enum';
+import { MembershipStatus } from './enum/club-members.enum';
 
 @Injectable()
 export class ClubMemberService {
@@ -32,6 +33,7 @@ export class ClubMemberService {
         'CASE WHEN member.userId IS NOT NULL THEN true ELSE false END AS "isRegisteredUser"',
       ])
       .where('member.clubId = :clubId', { clubId })
+      .andWhere('member.status = :status', { status: MembershipStatus.ACTIVE })
       .orderBy('member.dateJoined', 'ASC')
       .getRawMany();
 
@@ -44,7 +46,10 @@ export class ClubMemberService {
 
   async getMemberById(memberId: string): Promise<ClubMember> {
     const member = await this.memberRepo.findOne({
-      where: { id: memberId },
+      where: {
+        id: memberId,
+        status: MembershipStatus.ACTIVE,
+      },
       relations: ['user', 'club'],
     });
 
@@ -57,13 +62,19 @@ export class ClubMemberService {
 
   async getUserClubs(userId: string): Promise<Club[]> {
     const memberships = await this.memberRepo.find({
-      where: { userId },
+      where: {
+        userId,
+        status: MembershipStatus.ACTIVE,
+      },
       relations: ['club'],
     });
 
     return memberships.map((membership) => membership.club);
   }
 
+  // i will see this later
+
+  // ok
   async addMemberToClub(
     clubId: string,
     options: {
@@ -122,6 +133,9 @@ export class ClubMemberService {
     return { message: 'Member removed from club successfully' };
   }
 
+  // i will see this later
+
+  // ok
   async joinClubByCode(clubCode: string, userId: string): Promise<ClubMember> {
     const club = await this.clubRepo.findOne({ where: { clubCode } });
     if (!club) throw new NotFoundException('Club not found with this code');
@@ -142,7 +156,11 @@ export class ClubMemberService {
   ): Promise<{ member: boolean; role: ClubRole | null }> {
     console.log('Getting member role for clubId:', clubId, 'userId:', userId);
     const member = await this.memberRepo.find({
-      where: { clubId, userId },
+      where: {
+        clubId,
+        userId,
+        status: MembershipStatus.ACTIVE,
+      },
       select: ['role'],
     });
 
@@ -157,7 +175,11 @@ export class ClubMemberService {
 
   async updateRole(memberId: string, newRole: ClubRole, clubId: string) {
     const member = await this.memberRepo.findOne({
-      where: { id: memberId, clubId },
+      where: {
+        id: memberId,
+        clubId,
+        status: MembershipStatus.ACTIVE,
+      },
     });
     if (!member) throw new NotFoundException('Member not found');
 
@@ -183,6 +205,7 @@ export class ClubMemberService {
         'guestMembers',
       )
       .where('member.clubId = :clubId', { clubId })
+      .andWhere('member.status = :status', { status: 'active' })
       .getRawOne();
 
     /* can use this alternative but it uses three queries instead of one */
@@ -196,9 +219,9 @@ export class ClubMemberService {
     // });
 
     return {
-      totalMembers: parseInt(stats.totalMembers, 10),
-      registeredUsers: parseInt(stats.registeredUsers, 10),
-      guestMembers: parseInt(stats.guestMembers, 10),
+      totalMembers: parseInt(stats.totalMembers, 10) || 0,
+      registeredUsers: parseInt(stats.registeredUsers, 10) || 0,
+      guestMembers: parseInt(stats.guestMembers, 10) || 0,
     };
   }
 }

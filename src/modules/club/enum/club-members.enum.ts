@@ -1,1 +1,5 @@
-export enum MembershipStatus { PENDING = 'pending', ACTIVE = 'active', REJECTED = 'rejected' }
+export enum MembershipStatus {
+  PENDING = 'pending',
+  ACTIVE = 'active',
+  REJECTED = 'rejected',
+}
