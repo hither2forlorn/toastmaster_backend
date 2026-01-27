@@ -10,6 +10,7 @@ import {
 import { UserService } from '../user/user.service';
 import { ClubRole } from './enum/club-role.enum';
 import { MembershipStatus } from './enum/club-members.enum';
+import { ClubWithPendingMembersDto } from './dtos/pending-member.dto';
 
 @Injectable()
 export class ClubMemberService {
@@ -225,6 +226,36 @@ export class ClubMemberService {
     }
 
     return await this.addMemberToClubV2(club.id, { userId, addedByOwner: false });
+  }
+
+  async getPendingRequestToJoinClubByCode(userId: string): Promise<ClubWithPendingMembersDto[]> {
+    const clubs = await this.clubRepo
+      .createQueryBuilder('club')
+      .leftJoinAndSelect('club.members', 'member', 'member.status = :status', {
+        status: 'pending',
+      })
+      .where('club.ownerId = :userId', { userId })
+      .getMany();
+
+    if (!clubs || clubs.length === 0) {
+      throw new BadRequestException('You are not an owner of any club');
+    }
+
+    return clubs
+      .filter(club => club.members.length > 0)
+      .map(club => ({
+        id: club.id,
+        name: club.name,
+        description: club.description,
+        members: club.members.map(m => ({
+          id: m.id,
+          memberName: m.memberName,
+          memberEmail: m.memberEmail,
+          dateJoined: m.dateJoined,
+          status: m.status,
+          role: m.role,
+        })),
+      }));
   }
 
   async getMemberRole(

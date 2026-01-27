@@ -120,6 +120,15 @@ export class ClubController {
       userId,
     );
   }
+
+  @Get('/request-join')
+  getPendingRequestToJoinClub(
+    @GetUser('sub') userId: string,
+  ) {
+    return this.clubMemberService.getPendingRequestToJoinClubByCode(
+      userId,
+    );
+  }
   
   @Get('/member/role')
   getMemberRole(
