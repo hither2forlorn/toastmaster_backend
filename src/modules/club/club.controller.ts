@@ -110,6 +110,17 @@ export class ClubController {
     );
   }
 
+  @Post('/request-join')
+  requestJoinClub(
+    @Body() joinClubByCodeDto: JoinClubByCodeDto,
+    @GetUser('sub') userId: string,
+  ) {
+    return this.clubMemberService.joinClubByCodeV2(
+      joinClubByCodeDto.clubCode,
+      userId,
+    );
+  }
+  
   @Get('/member/role')
   getMemberRole(
     @Query('clubId') clubId: string,

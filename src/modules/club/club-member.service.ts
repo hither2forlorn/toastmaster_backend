@@ -19,7 +19,7 @@ export class ClubMemberService {
     @InjectRepository(Club)
     private readonly clubRepo: Repository<Club>,
     private readonly userService: UserService,
-  ) {}
+  ) { }
 
   async getClubMembers(clubId: string): Promise<ClubMember[]> {
     const members = await this.memberRepo
@@ -72,9 +72,7 @@ export class ClubMemberService {
     return memberships.map((membership) => membership.club);
   }
 
-  // i will see this later
 
-  // ok
   async addMemberToClub(
     clubId: string,
     options: {
@@ -120,6 +118,64 @@ export class ClubMemberService {
     return await this.memberRepo.save(newMember);
   }
 
+  async addMemberToClubV2(
+    clubId: string,
+    options: {
+      memberName?: string;
+      memberEmail?: string;
+      userId?: string;
+      addedByOwner?: boolean;
+    },
+  ): Promise<ClubMember> {
+    const { memberName, memberEmail, userId, addedByOwner = false } = options;
+
+    const club = await this.clubRepo.findOne({ where: { id: clubId } });
+    if (!club) throw new NotFoundException('Club not found');
+
+    let finalName = memberName;
+    let finalEmail = memberEmail;
+    let finalUserId = userId || null;
+
+    if (userId) {
+      const user = await this.userService.getUserById(userId);
+      finalName = user.fullName;
+      finalEmail = user.email;
+      finalUserId = user.id;
+    }
+
+    const existing = await this.memberRepo.findOne({
+      where: [
+        ...(finalUserId ? [{ clubId, userId: finalUserId }] : []),
+        { clubId, memberEmail: finalEmail },
+      ],
+    });
+
+    if (existing) {
+      if (existing.status === MembershipStatus.REJECTED) {
+        throw new BadRequestException('Your previous request was rejected');
+      }
+      if (existing.status === MembershipStatus.PENDING) {
+        throw new BadRequestException('You already have a pending request');
+      }
+      throw new BadRequestException('Member already exists in this club');
+    }
+
+    const isOwner = club.ownerId === finalUserId;
+
+    const newMember = this.memberRepo.create({
+      clubId,
+      memberName: finalName,
+      memberEmail: finalEmail,
+      userId: finalUserId,
+      role: isOwner ? ClubRole.OWNER : ClubRole.MEMBER,
+      status: addedByOwner || isOwner
+        ? MembershipStatus.ACTIVE
+        : MembershipStatus.PENDING,
+    });
+
+    return await this.memberRepo.save(newMember);
+  }
+
   async removeMemberFromClub(
     memberId: string,
     clubId: string,
@@ -133,9 +189,7 @@ export class ClubMemberService {
     return { message: 'Member removed from club successfully' };
   }
 
-  // i will see this later
 
-  // ok
   async joinClubByCode(clubCode: string, userId: string): Promise<ClubMember> {
     const club = await this.clubRepo.findOne({ where: { clubCode } });
     if (!club) throw new NotFoundException('Club not found with this code');
@@ -148,6 +202,29 @@ export class ClubMemberService {
       throw new BadRequestException('User already a member of this club');
 
     return await this.addMemberToClub(club.id, { userId });
+  }
+
+  async joinClubByCodeV2(clubCode: string, userId: string): Promise<ClubMember> {
+    const club = await this.clubRepo.findOne({ where: { clubCode } });
+    if (!club) throw new NotFoundException('Club not found with this code');
+
+    const existing = await this.memberRepo.findOne({
+      where: { clubId: club.id, userId },
+    });
+
+    if (existing) {
+      if (existing.status === MembershipStatus.ACTIVE) {
+        throw new BadRequestException('You are already a member of this club');
+      }
+      if (existing.status === MembershipStatus.PENDING) {
+        throw new BadRequestException('You already have a pending join request for this club');
+      }
+      if (existing.status === MembershipStatus.REJECTED) {
+        throw new BadRequestException('Your previous request to join this club was rejected. Please contact the club owner.');
+      }
+    }
+
+    return await this.addMemberToClubV2(club.id, { userId, addedByOwner: false });
   }
 
   async getMemberRole(
