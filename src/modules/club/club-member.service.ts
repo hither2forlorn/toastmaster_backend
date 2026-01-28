@@ -363,4 +363,18 @@ export class ClubMemberService {
       throw new BadRequestException('Invalid decision value');
     }
   }
+
+  async userClubStatus(userId:string){
+    const memberships = await this.memberRepo.find({
+      select: ['clubId', 'status'],
+      where: {
+        userId,
+      },
+    });
+    if(memberships.length === 0){
+      throw new NotFoundException('No club memberships found for this user');
+    }
+
+    return memberships
+  }
 }

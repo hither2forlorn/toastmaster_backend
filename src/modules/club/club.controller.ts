@@ -141,6 +141,15 @@ export class ClubController {
       userId,
     );
   }
+
+  @Get('/user-status')
+  userClubStatus(
+    @GetUser('sub') userId: string,
+  ) {
+    return this.clubMemberService.userClubStatus(
+      userId,
+    );
+  }
   
   @Get('/member/role')
   getMemberRole(
