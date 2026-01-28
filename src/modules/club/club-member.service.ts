@@ -114,6 +114,7 @@ export class ClubMemberService {
       memberEmail: finalEmail,
       userId: finalUserId,
       role: club.ownerId === finalUserId ? ClubRole.OWNER : ClubRole.MEMBER,
+      status : club.ownerId === finalUserId ? MembershipStatus.ACTIVE : MembershipStatus.PENDING,
     });
 
     return await this.memberRepo.save(newMember);
