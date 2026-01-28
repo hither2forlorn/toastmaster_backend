@@ -26,6 +26,7 @@ import {
   UpdateMemberRoleDto,
 } from './dtos/member-related.dto';
 import { Roles } from 'src/common/decorators/role.decorator';
+import { PendingRequestDecisionDto } from './dtos/pending-request-decision.dto';
 
 @ApiBearerAuth()
 @ApiTags('Clubs')
@@ -126,6 +127,17 @@ export class ClubController {
     @GetUser('sub') userId: string,
   ) {
     return this.clubMemberService.getPendingRequestToJoinClubByCode(
+      userId,
+    );
+  }
+
+  @Patch('/request-join')
+  pendingRequestDecision(
+    @Body() pendingRequestDecisionDto: PendingRequestDecisionDto,
+    @GetUser('sub') userId: string,
+  ) {
+    return this.clubMemberService.pendingRequestDecision(
+      pendingRequestDecisionDto,
       userId,
     );
   }

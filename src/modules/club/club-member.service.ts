@@ -11,6 +11,7 @@ import { UserService } from '../user/user.service';
 import { ClubRole } from './enum/club-role.enum';
 import { MembershipStatus } from './enum/club-members.enum';
 import { ClubWithPendingMembersDto } from './dtos/pending-member.dto';
+import { PendingRequestDecisionDto } from './dtos/pending-request-decision.dto';
 
 @Injectable()
 export class ClubMemberService {
@@ -114,7 +115,7 @@ export class ClubMemberService {
       memberEmail: finalEmail,
       userId: finalUserId,
       role: club.ownerId === finalUserId ? ClubRole.OWNER : ClubRole.MEMBER,
-      status : club.ownerId === finalUserId ? MembershipStatus.ACTIVE : MembershipStatus.PENDING,
+      status: club.ownerId === finalUserId ? MembershipStatus.ACTIVE : MembershipStatus.PENDING,
     });
 
     return await this.memberRepo.save(newMember);
@@ -332,5 +333,34 @@ export class ClubMemberService {
       registeredUsers: parseInt(stats.registeredUsers, 10) || 0,
       guestMembers: parseInt(stats.guestMembers, 10) || 0,
     };
+  }
+
+  async pendingRequestDecision(pendingRequestDecisionDto: PendingRequestDecisionDto, userId: string) {
+    const member = await this.memberRepo.findOne({
+      where: {
+        id: pendingRequestDecisionDto.memberId,
+      },
+      relations: ['club'],
+    });
+
+    if (!member) {
+      throw new NotFoundException('Member not found');
+    }
+
+    if (member.club.ownerId !== userId) {
+      throw new BadRequestException('You are not authorized to make this decision');
+    }
+
+    if (pendingRequestDecisionDto.decision) {
+      member.status = MembershipStatus.ACTIVE;
+      await this.memberRepo.save(member);
+      return { message: 'Membership request approved' };
+    } else if (!pendingRequestDecisionDto.decision) {
+      member.status = MembershipStatus.REJECTED;
+      await this.memberRepo.save(member);
+      return { message: 'Membership request rejected' };
+    } else {
+      throw new BadRequestException('Invalid decision value');
+    }
   }
 }
