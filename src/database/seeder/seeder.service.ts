@@ -11,6 +11,7 @@ import { ClubRole } from 'src/modules/club/enum/club-role.enum';
 import { ClubMeetingFrequency } from 'src/modules/club/enum/club-meeting-frequency.enum';
 import { MEETING_STATUS } from 'src/modules/meeting/enum/meeting-status.enum';
 import { ReportType } from 'src/modules/agenda-report/entities/agenda-report.entity';
+import { MembershipStatus } from 'src/modules/club/enum/club-members.enum';
 
 @Injectable()
 export class SeederService {
@@ -139,6 +140,7 @@ export class SeederService {
         memberName: 'one andonly',
         memberEmail: 'one@sk.com',
         role: ClubRole.OWNER,
+        status: MembershipStatus.ACTIVE,
       },
       {
         id: '22222222-2222-2222-2222-222222222222',
@@ -147,6 +149,7 @@ export class SeederService {
         memberName: 'two andonly',
         memberEmail: 'two@sk.com',
         role: ClubRole.MEMBER,
+        status: MembershipStatus.ACTIVE,
       },
       {
         id: '33333333-3333-3333-3333-333333333333',
@@ -155,6 +158,7 @@ export class SeederService {
         memberName: 'Guest Speaker Ram',
         memberEmail: 'ram@guest.com',
         role: ClubRole.MEMBER,
+        status: MembershipStatus.ACTIVE,
       },
       // Patan members
       {
@@ -164,6 +168,7 @@ export class SeederService {
         memberName: 'one andonly',
         memberEmail: 'one@sk.com',
         role: ClubRole.OWNER,
+        status: MembershipStatus.ACTIVE,
       },
       {
         id: '55555555-5555-5555-5555-555555555555',
@@ -172,6 +177,7 @@ export class SeederService {
         memberName: 'Sita Sharma',
         memberEmail: 'sita@guest.com',
         role: ClubRole.MEMBER,
+        status: MembershipStatus.ACTIVE,
       },
       // Bhaktapur members
       {
@@ -181,6 +187,7 @@ export class SeederService {
         memberName: 'two andonly',
         memberEmail: 'two@sk.com',
         role: ClubRole.OWNER,
+        status: MembershipStatus.ACTIVE,
       },
       {
         id: '77777777-7777-7777-7777-777777777777',
@@ -189,6 +196,7 @@ export class SeederService {
         memberName: 'one andonly',
         memberEmail: 'one@sk.com',
         role: ClubRole.MEMBER,
+        status: MembershipStatus.ACTIVE,
       },
       {
         id: '88888888-8888-8888-8888-888888888888',
@@ -197,6 +205,7 @@ export class SeederService {
         memberName: 'Hari Prasad',
         memberEmail: 'hari@guest.com',
         role: ClubRole.MEMBER,
+        status: MembershipStatus.ACTIVE,
       },
     ];
 
