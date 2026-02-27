@@ -61,13 +61,13 @@ export class UserService {
         ) AS member_of`,
         `COALESCE(
           JSONB_AGG(
-            DISTINCT CASE WHEN "membership"."role" = 'ADMIN' AND "club"."id" IS NOT NULL
+            DISTINCT CASE WHEN "membership"."role" IN ('ADMIN', 'OWNER') AND "club"."id" IS NOT NULL
               THEN JSONB_BUILD_OBJECT(
                 'id', "club"."id",
                 'name', "club"."name"
               )
             END
-          ) FILTER (WHERE "membership"."role" = 'ADMIN' AND "club"."id" IS NOT NULL), '[]'
+          ) FILTER (WHERE "membership"."role" IN ('ADMIN', 'OWNER') AND "club"."id" IS NOT NULL), '[]'
         ) AS admin_of`,
         `COALESCE(
           JSONB_AGG(
