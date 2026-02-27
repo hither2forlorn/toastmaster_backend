@@ -29,7 +29,7 @@ import { AssignRoleDto, ReorderAgendaDto } from './dtos/agenda.dto';
 @Roles(ClubRole.OWNER, ClubRole.ADMIN)
 @Controller('agenda')
 export class AgendaController {
-  constructor(private readonly agendaService: AgendaService) { }
+  constructor(private readonly agendaService: AgendaService) {}
 
   @Post('/create')
   @ApiOperation({ summary: 'Create a new agenda item' })

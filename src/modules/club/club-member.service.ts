@@ -21,11 +21,12 @@ export class ClubMemberService {
     @InjectRepository(Club)
     private readonly clubRepo: Repository<Club>,
     private readonly userService: UserService,
-  ) { }
+  ) {}
 
   async getClubMembers(clubId: string): Promise<ClubMember[]> {
     const members = await this.memberRepo
       .createQueryBuilder('member')
+      .leftJoin('member.user', 'user')
       .select([
         'member.id',
         'member.memberName',
@@ -33,6 +34,7 @@ export class ClubMemberService {
         'member.dateJoined',
         'member.role',
         'CASE WHEN member.userId IS NOT NULL THEN true ELSE false END AS "isRegisteredUser"',
+        'user.introduction',
       ])
       .where('member.clubId = :clubId', { clubId })
       .andWhere('member.status = :status', { status: MembershipStatus.ACTIVE })
@@ -74,7 +76,6 @@ export class ClubMemberService {
     return memberships.map((membership) => membership.club);
   }
 
-
   async addMemberToClub(
     clubId: string,
     options: {
@@ -115,7 +116,7 @@ export class ClubMemberService {
       memberEmail: finalEmail,
       userId: finalUserId,
       role: club.ownerId === finalUserId ? ClubRole.OWNER : ClubRole.MEMBER,
-      status: club.ownerId === finalUserId ? MembershipStatus.ACTIVE : MembershipStatus.PENDING,
+      status: MembershipStatus.ACTIVE,
     });
 
     return await this.memberRepo.save(newMember);
@@ -171,9 +172,10 @@ export class ClubMemberService {
       memberEmail: finalEmail,
       userId: finalUserId,
       role: isOwner ? ClubRole.OWNER : ClubRole.MEMBER,
-      status: addedByOwner || isOwner
-        ? MembershipStatus.ACTIVE
-        : MembershipStatus.PENDING,
+      status:
+        addedByOwner || isOwner
+          ? MembershipStatus.ACTIVE
+          : MembershipStatus.PENDING,
     });
 
     return await this.memberRepo.save(newMember);
@@ -192,7 +194,6 @@ export class ClubMemberService {
     return { message: 'Member removed from club successfully' };
   }
 
-
   async joinClubByCode(clubCode: string, userId: string): Promise<ClubMember> {
     const club = await this.clubRepo.findOne({ where: { clubCode } });
     if (!club) throw new NotFoundException('Club not found with this code');
@@ -207,7 +208,10 @@ export class ClubMemberService {
     return await this.addMemberToClub(club.id, { userId });
   }
 
-  async joinClubByCodeV2(clubCode: string, userId: string): Promise<ClubMember> {
+  async joinClubByCodeV2(
+    clubCode: string,
+    userId: string,
+  ): Promise<ClubMember> {
     const club = await this.clubRepo.findOne({ where: { clubCode } });
     if (!club) throw new NotFoundException('Club not found with this code');
 
@@ -220,17 +224,26 @@ export class ClubMemberService {
         throw new BadRequestException('You are already a member of this club');
       }
       if (existing.status === MembershipStatus.PENDING) {
-        throw new BadRequestException('You already have a pending join request for this club');
+        throw new BadRequestException(
+          'You already have a pending join request for this club',
+        );
       }
       if (existing.status === MembershipStatus.REJECTED) {
-        throw new BadRequestException('Your previous request to join this club was rejected. Please contact the club owner.');
+        throw new BadRequestException(
+          'Your previous request to join this club was rejected. Please contact the club owner.',
+        );
       }
     }
 
-    return await this.addMemberToClubV2(club.id, { userId, addedByOwner: false });
+    return await this.addMemberToClubV2(club.id, {
+      userId,
+      addedByOwner: false,
+    });
   }
 
-  async getPendingRequestToJoinClubByCode(userId: string): Promise<ClubWithPendingMembersDto[]> {
+  async getPendingRequestToJoinClubByCode(
+    userId: string,
+  ): Promise<ClubWithPendingMembersDto[]> {
     const clubs = await this.clubRepo
       .createQueryBuilder('club')
       .leftJoinAndSelect('club.members', 'member', 'member.status = :status', {
@@ -240,16 +253,16 @@ export class ClubMemberService {
       .getMany();
 
     if (!clubs || clubs.length === 0) {
-      throw new BadRequestException('You are not an owner of any club');
+      return [];
     }
 
     return clubs
-      .filter(club => club.members.length > 0)
-      .map(club => ({
+      .filter((club) => club.members.length > 0)
+      .map((club) => ({
         id: club.id,
         name: club.name,
         description: club.description,
-        members: club.members.map(m => ({
+        members: club.members.map((m) => ({
           id: m.id,
           memberName: m.memberName,
           memberEmail: m.memberEmail,
@@ -335,7 +348,10 @@ export class ClubMemberService {
     };
   }
 
-  async pendingRequestDecision(pendingRequestDecisionDto: PendingRequestDecisionDto, userId: string) {
+  async pendingRequestDecision(
+    pendingRequestDecisionDto: PendingRequestDecisionDto,
+    userId: string,
+  ) {
     const member = await this.memberRepo.findOne({
       where: {
         id: pendingRequestDecisionDto.memberId,
@@ -348,7 +364,9 @@ export class ClubMemberService {
     }
 
     if (member.club.ownerId !== userId) {
-      throw new BadRequestException('You are not authorized to make this decision');
+      throw new BadRequestException(
+        'You are not authorized to make this decision',
+      );
     }
 
     if (pendingRequestDecisionDto.decision) {
@@ -364,17 +382,17 @@ export class ClubMemberService {
     }
   }
 
-  async userClubStatus(userId:string){
+  async userClubStatus(userId: string) {
     const memberships = await this.memberRepo.find({
       select: ['clubId', 'status'],
       where: {
         userId,
       },
     });
-    if(memberships.length === 0){
+    if (memberships.length === 0) {
       throw new NotFoundException('No club memberships found for this user');
     }
 
-    return memberships
+    return memberships;
   }
 }

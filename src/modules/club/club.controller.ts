@@ -123,12 +123,8 @@ export class ClubController {
   }
 
   @Get('/request-join')
-  getPendingRequestToJoinClub(
-    @GetUser('sub') userId: string,
-  ) {
-    return this.clubMemberService.getPendingRequestToJoinClubByCode(
-      userId,
-    );
+  getPendingRequestToJoinClub(@GetUser('sub') userId: string) {
+    return this.clubMemberService.getPendingRequestToJoinClubByCode(userId);
   }
 
   @Patch('/request-join')
@@ -143,14 +139,10 @@ export class ClubController {
   }
 
   @Get('/user-status')
-  userClubStatus(
-    @GetUser('sub') userId: string,
-  ) {
-    return this.clubMemberService.userClubStatus(
-      userId,
-    );
+  userClubStatus(@GetUser('sub') userId: string) {
+    return this.clubMemberService.userClubStatus(userId);
   }
-  
+
   @Get('/member/role')
   getMemberRole(
     @Query('clubId') clubId: string,

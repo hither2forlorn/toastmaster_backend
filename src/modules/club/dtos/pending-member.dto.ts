@@ -1,5 +1,5 @@
-import { MembershipStatus } from "../enum/club-members.enum";
-import { ClubRole } from "../enum/club-role.enum";
+import { MembershipStatus } from '../enum/club-members.enum';
+import { ClubRole } from '../enum/club-role.enum';
 
 export class PendingMemberDto {
   id: string;
