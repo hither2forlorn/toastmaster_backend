@@ -17,10 +17,10 @@ import { AgendaTemplateModule } from '../agenda-template/agenda-template.module'
     ClubModule,
     MeetingModule,
     UserModule,
-    AgendaTemplateModule
+    AgendaTemplateModule,
   ],
   controllers: [AgendaReportController],
   providers: [AgendaReportService],
-  exports: [AgendaReportService]
+  exports: [AgendaReportService],
 })
 export class AgendaReportModule {}

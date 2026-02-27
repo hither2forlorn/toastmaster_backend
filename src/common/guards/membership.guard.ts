@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ClubRole } from 'src/modules/club/enum/club-role.enum';
 import { UserService } from 'src/modules/user/user.service';
@@ -30,7 +35,7 @@ export class MembershipGuard implements CanActivate {
     const club = req.params?.clubId || req.body?.clubId || req.query?.clubId;
 
     if (!user || !club) {
-      return false;
+      throw new ForbiddenException('Access denied');
     }
 
     const profile = await this.userService.getProfile(user.sub);
@@ -44,7 +49,7 @@ export class MembershipGuard implements CanActivate {
     const isOwner = ownedClubs.some((c: { id: string }) => c.id === club);
 
     if (!isMember && !isAdmin && !isOwner) {
-      return false;
+      throw new ForbiddenException('You are not a member of this club');
     }
 
     req.clubRole = isOwner
@@ -60,7 +65,7 @@ export class MembershipGuard implements CanActivate {
     const hasRole = requiredRoles.includes(req.clubRole);
 
     if (!hasRole) {
-      return false;
+      throw new ForbiddenException('You do not have the required role');
     }
 
     return true;

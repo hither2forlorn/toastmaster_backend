@@ -2,7 +2,11 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateUserDto } from './dtos/user.dto';
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  ChangePasswordDto,
+} from './dtos/user.dto';
 import { MembershipStatus } from '../club/enum/club-members.enum';
 
 @Injectable()
@@ -44,6 +48,7 @@ export class UserService {
         'user.id',
         'user.email',
         'user.fullName',
+        'user.introduction',
         `COALESCE(
           JSONB_AGG(
             DISTINCT CASE WHEN "membership"."role" = 'MEMBER' AND "club"."id" IS NOT NULL
@@ -112,5 +117,43 @@ export class UserService {
     });
 
     return Array.from(allClubsMap.values());
+  }
+
+  // update profile details for given user id
+  async updateProfile(userId: string, data: UpdateUserDto) {
+    const user = await this.getUserById(userId);
+
+    if (data.email && data.email !== user.email) {
+      const existing = await this.userRepo.findOneBy({ email: data.email });
+      if (existing && existing.id !== userId) {
+        throw new BadRequestException('Email already in use');
+      }
+    }
+
+    Object.assign(user, data);
+    return this.userRepo.save(user);
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    if (dto.newPassword !== dto.confirmPassword) {
+      throw new BadRequestException('Passwords do not match');
+    }
+
+    const user = await this.userRepo
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.id = :id', { id: userId })
+      .getOne();
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const match = await user.comparePassword(dto.currentPassword);
+    if (!match) {
+      throw new BadRequestException('Current password is incorrect');
+    }
+
+    user.password = dto.newPassword;
+    return this.userRepo.save(user);
   }
 }
