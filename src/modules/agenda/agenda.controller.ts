@@ -26,7 +26,7 @@ import { AssignRoleDto, ReorderAgendaDto } from './dtos/agenda.dto';
 @ApiTags('Agenda')
 @ApiBearerAuth()
 @UseGuards(MembershipGuard)
-@Roles(ClubRole.OWNER, ClubRole.ADMIN)
+@Roles(ClubRole.MEMBER, ClubRole.ADMIN, ClubRole.OWNER)
 @Controller('agenda')
 export class AgendaController {
   constructor(private readonly agendaService: AgendaService) {}

@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Agenda } from './entities/agenda.entity';
+import { Meeting } from '../meeting/entities/meeting.entity';
 import { Repository } from 'typeorm';
 import { CreateAgendaDto } from './dtos/create-agenda.dto';
 import { ClubMemberService } from '../club/club-member.service';
@@ -18,8 +19,21 @@ export interface GrammarianAgendaData {
 export class AgendaService {
   constructor(
     @InjectRepository(Agenda) private readonly agendaRepo: Repository<Agenda>,
+    @InjectRepository(Meeting) private readonly meetingRepo: Repository<Meeting>,
     private readonly memberService: ClubMemberService,
   ) {}
+
+  private async assertMeetingNotPast(meetingId: string): Promise<void> {
+    const meeting = await this.meetingRepo.findOne({ where: { id: meetingId } });
+    if (!meeting) throw new BadRequestException('Meeting not found');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const meetingDate = new Date(meeting.date);
+    meetingDate.setHours(0, 0, 0, 0);
+    if (meetingDate < today) {
+      throw new BadRequestException('Cannot modify agenda for a past meeting');
+    }
+  }
 
   // utils function
   private validateMemberInput(data: CreateAgendaDto) {
@@ -59,6 +73,7 @@ export class AgendaService {
   }
 
   async createAgenda(data: CreateAgendaDto, clubId: string): Promise<Agenda> {
+    await this.assertMeetingNotPast(data.meetingId);
     this.validateMemberInput(data);
 
     const memberData = await this.resolveMember(data);
@@ -111,6 +126,7 @@ export class AgendaService {
     data: Partial<CreateAgendaDto>,
   ): Promise<Agenda> {
     const agenda = await this.getAgendaById(agendaId);
+    await this.assertMeetingNotPast(agenda.meetingId);
 
     if (agenda.isGuest === false && data.memberName) {
       throw new BadRequestException(
@@ -124,6 +140,7 @@ export class AgendaService {
 
   async deleteAgenda(agendaId: string): Promise<{ message: string }> {
     const agenda = await this.getAgendaById(agendaId);
+    await this.assertMeetingNotPast(agenda.meetingId);
 
     await this.agendaRepo.delete(agenda.id);
 
@@ -158,6 +175,7 @@ export class AgendaService {
     }));
   }
   async updateSequenceOfAgendas(meetingId: string, agendaOrder: string[]) {
+    await this.assertMeetingNotPast(meetingId);
     const agendas = await this.agendaRepo.find({ where: { meetingId } });
     const agendaMap = new Map(agendas.map((a) => [a.id, a]));
 
