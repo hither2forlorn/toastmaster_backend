@@ -249,7 +249,13 @@ export class ClubMemberService {
       .leftJoinAndSelect('club.members', 'member', 'member.status = :status', {
         status: 'pending',
       })
-      .where('club.ownerId = :userId', { userId })
+      .leftJoin(
+        'club.members',
+        'adminMember',
+        'adminMember.userId = :userId AND adminMember.role = :adminRole AND adminMember.status = :activeStatus',
+        { userId, adminRole: ClubRole.ADMIN, activeStatus: MembershipStatus.ACTIVE },
+      )
+      .where('club.ownerId = :userId OR adminMember.id IS NOT NULL', { userId })
       .getMany();
 
     if (!clubs || clubs.length === 0) {
@@ -315,36 +321,35 @@ export class ClubMemberService {
     totalMembers: number;
     registeredUsers: number;
     guestMembers: number;
+    pendingMembers: number;
   }> {
     const stats = await this.memberRepo
       .createQueryBuilder('member')
-      .select('COUNT(member.id)', 'totalMembers')
+      .select(
+        'SUM(CASE WHEN member.status = :active THEN 1 ELSE 0 END)',
+        'totalMembers',
+      )
       .addSelect(
-        'SUM(CASE WHEN member.userId IS NOT NULL THEN 1 ELSE 0 END)',
+        'SUM(CASE WHEN member.userId IS NOT NULL AND member.status = :active THEN 1 ELSE 0 END)',
         'registeredUsers',
       )
       .addSelect(
-        'SUM(CASE WHEN member.userId IS NULL THEN 1 ELSE 0 END)',
+        'SUM(CASE WHEN member.userId IS NULL AND member.status = :active THEN 1 ELSE 0 END)',
         'guestMembers',
       )
+      .addSelect(
+        'SUM(CASE WHEN member.status = :pending THEN 1 ELSE 0 END)',
+        'pendingMembers',
+      )
       .where('member.clubId = :clubId', { clubId })
-      .andWhere('member.status = :status', { status: 'active' })
+      .setParameters({ active: 'active', pending: 'pending' })
       .getRawOne();
-
-    /* can use this alternative but it uses three queries instead of one */
-
-    // const totalMembers = await this.repo.count({ where: { clubId } });
-    // const registeredUsers = await this.repo.count({
-    //   where: { clubId, userId: Not(IsNull()) },
-    // });
-    // const guestMembers = await this.repo.count({
-    //   where: { clubId, userId: IsNull() },
-    // });
 
     return {
       totalMembers: parseInt(stats.totalMembers, 10) || 0,
       registeredUsers: parseInt(stats.registeredUsers, 10) || 0,
       guestMembers: parseInt(stats.guestMembers, 10) || 0,
+      pendingMembers: parseInt(stats.pendingMembers, 10) || 0,
     };
   }
 
@@ -363,7 +368,17 @@ export class ClubMemberService {
       throw new NotFoundException('Member not found');
     }
 
-    if (member.club.ownerId !== userId) {
+    const isOwner = member.club.ownerId === userId;
+    const isAdmin = await this.memberRepo.findOne({
+      where: {
+        clubId: member.clubId,
+        userId,
+        role: ClubRole.ADMIN,
+        status: MembershipStatus.ACTIVE,
+      },
+    });
+
+    if (!isOwner && !isAdmin) {
       throw new BadRequestException(
         'You are not authorized to make this decision',
       );
