@@ -117,7 +117,7 @@ export class MeetingService {
       where: whereClause,
       skip: (page - 1) * limit,
       take: limit,
-      order: { date: 'DESC' },
+      order: { date: 'ASC' },
     });
 
     return meetings;
@@ -139,6 +139,10 @@ export class MeetingService {
       whereClause.date = MoreThanOrEqual(new Date(startDate));
     } else if (endDate) {
       whereClause.date = LessThanOrEqual(new Date(endDate));
+    } else {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      whereClause.date = MoreThanOrEqual(today);
     }
     const upcomingMeeting = await this.meetingRepo.find({
       where: whereClause,

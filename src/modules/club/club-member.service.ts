@@ -342,7 +342,8 @@ export class ClubMemberService {
         'pendingMembers',
       )
       .where('member.clubId = :clubId', { clubId })
-      .setParameters({ active: 'active', pending: 'pending' })
+      .setParameter('active', MembershipStatus.ACTIVE)
+      .setParameter('pending', MembershipStatus.PENDING)
       .getRawOne();
 
     return {
