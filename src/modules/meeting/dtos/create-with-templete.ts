@@ -55,13 +55,15 @@ class AgendaItemDto {
   memberId: string | null;
 
   @ApiProperty({
-    description: 'Name of the member assigned',
+    description: 'Name of the guest assigned (only required when assignmentType is "guest")',
     example: 'John Doe',
     minLength: 2,
+    required: false,
+    nullable: true,
   })
   @IsString()
-  @IsNotEmpty()
-  memberName: string;
+  @IsOptional()
+  memberName?: string | null;
 
   @ApiProperty({
     description: 'Sequence order of the agenda item',

@@ -35,8 +35,8 @@ export class Agenda extends BaseEntity {
   @Column({ name: 'member_id', nullable: true })
   memberId?: string;
 
-  @Column({ name: 'member_name' })
-  memberName: string;
+  @Column({ name: 'member_name', nullable: true })
+  memberName: string | null;
 
   @Column({ name: 'is_guest' })
   isGuest: boolean;

@@ -66,10 +66,7 @@ export class AgendaService {
       }
     }
 
-    return {
-      isGuest: false,
-      memberName: member.memberName,
-    };
+    return { isGuest: false };
   }
 
   async createAgenda(data: CreateAgendaDto, clubId: string): Promise<Agenda> {
@@ -96,9 +93,17 @@ export class AgendaService {
     return agenda;
   }
   async getAllAgendasOfMeeting(meetingId: string): Promise<Agenda[]> {
-    return this.agendaRepo.find({
+    const agendas = await this.agendaRepo.find({
       where: { meetingId },
       order: { sequence: 'ASC' },
+      relations: ['member'],
+    });
+    // For club-member assignments, always use the current name from club_member table
+    return agendas.map((agenda) => {
+      if (!agenda.isGuest && agenda.member) {
+        agenda.memberName = agenda.member.memberName;
+      }
+      return agenda;
     });
   }
 
@@ -160,12 +165,16 @@ export class AgendaService {
     const roleCounts = await this.agendaRepo
       .createQueryBuilder('agenda')
       .innerJoin('agenda.meeting', 'meeting')
+      .leftJoin('club_member', 'member', 'member.id = agenda.member_id')
       .select('agenda.roleName', 'role')
-      .addSelect('agenda.memberName', 'memberName')
+      .addSelect(
+        "COALESCE(member.member_name, agenda.member_name)",
+        'memberName',
+      )
       .addSelect('COUNT(agenda.roleName)', 'count')
       .where('meeting.clubId = :clubId', { clubId })
       .groupBy('agenda.roleName')
-      .addGroupBy('agenda.memberName')
+      .addGroupBy("COALESCE(member.member_name, agenda.member_name)")
       .getRawMany();
 
     return roleCounts.map((item) => ({
