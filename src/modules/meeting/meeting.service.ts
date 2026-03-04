@@ -11,12 +11,14 @@ import { UpdateMeetingDto } from './dtos/update-meeting.dto';
 import { MEETING_STATUS } from './enum/meeting-status.enum';
 import { CreateMeetingWithTemplateDto } from './dtos/create-with-templete';
 import { Agenda } from '../agenda/entities/agenda.entity';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class MeetingService {
   constructor(
     @InjectRepository(Meeting)
     private readonly meetingRepo: Repository<Meeting>,
+    private readonly userService: UserService,
   ) {}
 
   async createMeeting(data: CreateMeetingDto): Promise<Meeting> {
@@ -93,24 +95,37 @@ export class MeetingService {
 
   async getMeetingsByClub(
     clubId: string,
+    userId: string,
     page = 1,
     limit = 10,
     status?: string,
     startDate?: string,
     endDate?: string,
   ): Promise<Meeting[]> {
+    const profile = await this.userService.getProfile(userId);
+    const isMember =
+      profile?.member_of?.some((c: { id: string }) => c.id === clubId) ||
+      profile?.admin_of?.some((c: { id: string }) => c.id === clubId) ||
+      profile?.owned_clubs?.some((c: { id: string }) => c.id === clubId);
+
     const whereClause: any = { clubId };
 
     if (status) {
       whereClause.status = status;
     }
 
-    if (startDate && endDate) {
-      whereClause.date = Between(new Date(startDate), new Date(endDate));
-    } else if (startDate) {
-      whereClause.date = MoreThanOrEqual(new Date(startDate));
-    } else if (endDate) {
-      whereClause.date = LessThanOrEqual(new Date(endDate));
+    if (!isMember) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      whereClause.date = MoreThanOrEqual(today);
+    } else {
+      if (startDate && endDate) {
+        whereClause.date = Between(new Date(startDate), new Date(endDate));
+      } else if (startDate) {
+        whereClause.date = MoreThanOrEqual(new Date(startDate));
+      } else if (endDate) {
+        whereClause.date = LessThanOrEqual(new Date(endDate));
+      }
     }
 
     const meetings = await this.meetingRepo.find({
