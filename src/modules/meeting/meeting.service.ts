@@ -225,7 +225,7 @@ export class MeetingService {
             duration: agenda.duration,
             sequence: agenda.sequence,
             memberId: agenda.memberId ?? undefined,
-            memberName: agenda.memberName,
+            memberName: agenda.assignmentType === 'guest' ? agenda.memberName : undefined,
             notes: agenda.notes ?? undefined,
             isGuest: agenda.assignmentType === 'guest',
             meetingId: savedMeeting.id,
