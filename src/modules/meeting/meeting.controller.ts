@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -33,7 +34,7 @@ import { CreateMeetingWithTemplateDto } from './dtos/create-with-templete';
 export class MeetingController {
   constructor(private readonly meetingService: MeetingService) {}
 
-  @Public()
+  @ApiBearerAuth()
   @Get('upcoming')
   getUpcoming(@Query() query: UpcomingEventsDTO) {
     return this.meetingService.getUpcomingMeeting(
@@ -73,14 +74,16 @@ export class MeetingController {
   getMeetingById(@Param('id') id: string) {
     return this.meetingService.getMeetingById(id);
   }
-  @Public()
+  @ApiBearerAuth()
   @Get('club/:clubId')
   getMeetingsByClub(
     @Param('clubId') clubId: string,
     @Query() query: GetMeetingsByClubDto,
+    @Req() req: any,
   ) {
     return this.meetingService.getMeetingsByClub(
       clubId,
+      req.user.sub,
       query.page,
       query.limit,
       query.status,
