@@ -62,6 +62,7 @@ export class ClubService {
         'division',
         'ownerId',
         'clubCode',
+        'charterDate',
       ],
     });
     console.log('This is the info of the club ', club);
