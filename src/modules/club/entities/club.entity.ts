@@ -39,6 +39,9 @@ export class Club extends BaseEntity {
   @Column({ name: 'club_code', unique: true, length: 20, select: false })
   clubCode: string;
 
+  @Column({ name: 'charter_date', type: 'date', nullable: true })
+  charterDate: Date | null;
+
   @OneToMany(() => ClubMember, (member) => member.club)
   members: ClubMember[];
 

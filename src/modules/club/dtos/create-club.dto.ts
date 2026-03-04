@@ -1,11 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsDateString,
   IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ClubMeetingFrequency } from '../enum/club-meeting-frequency.enum';
 
 export class CreateClubDto {
@@ -67,4 +69,13 @@ export class CreateClubDto {
   @IsEnum(ClubMeetingFrequency)
   @IsOptional()
   meetingFrequency?: ClubMeetingFrequency;
+
+  @ApiPropertyOptional({
+    description: 'Charter date of the club',
+    example: '2023-05-15',
+  })
+  @Transform(({ value }) => value || undefined)
+  @IsDateString()
+  @IsOptional()
+  charterDate?: string;
 }
