@@ -179,13 +179,31 @@ export class AgendaService {
     const agendas = await this.agendaRepo.find({ where: { meetingId } });
     const agendaMap = new Map(agendas.map((a) => [a.id, a]));
 
-    agendaOrder.forEach((agendaId, index) => {
-      const agenda = agendaMap.get(agendaId);
-      if (!agenda) throw new BadRequestException('Invalid agendaId');
-      agenda.sequence = index + 1;
-    });
+    for (const agendaId of agendaOrder) {
+      if (!agendaMap.has(agendaId)) {
+        throw new BadRequestException('Invalid agendaId');
+      }
+    }
 
-    await this.agendaRepo.save([...agendaMap.values()]);
+    if (agendaOrder.length === 0) {
+      return { message: 'Agenda reordered successfully' };
+    }
+
+    await this.agendaRepo.manager.transaction(async (manager) => {
+      // Step 1: Shift all sequences to a high range to avoid unique constraint
+      // violations when swapping (e.g. seq 1↔2 would briefly create two rows with seq=2)
+      await manager.query(
+        'UPDATE agendas SET sequence = sequence + 10000 WHERE meeting_id = $1',
+        [meetingId],
+      );
+      // Step 2: Apply the new ordering
+      for (let i = 0; i < agendaOrder.length; i++) {
+        await manager.query(
+          'UPDATE agendas SET sequence = $1 WHERE id = $2',
+          [i + 1, agendaOrder[i]],
+        );
+      }
+    });
 
     return { message: 'Agenda reordered successfully' };
   }
