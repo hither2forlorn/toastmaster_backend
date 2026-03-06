@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Agenda } from './entities/agenda.entity';
 import { Meeting } from '../meeting/entities/meeting.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CreateAgendaDto } from './dtos/create-agenda.dto';
 import { ClubMemberService } from '../club/club-member.service';
 import { ClubService } from '../club/club.service';
@@ -224,6 +224,7 @@ export class AgendaService {
     return await this.agendaRepo.findOne({
       where: {
         meetingId: meetingId,
+        roleName: In(['Grammarian', 'Ah Counter']),
         member: {
           userId,
         },
