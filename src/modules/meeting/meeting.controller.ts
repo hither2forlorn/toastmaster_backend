@@ -102,7 +102,7 @@ export class MeetingController {
 
   @ApiBearerAuth()
   @UseGuards(MembershipGuard)
-  @Roles(ClubRole.OWNER, ClubRole.ADMIN)
+  @Roles(ClubRole.OWNER, ClubRole.ADMIN, ClubRole.MEMBER)
   @Patch(':id')
   updateMeeting(@Param('id') id: string, @Body() data: UpdateMeetingDto) {
     return this.meetingService.updateMeeting(data, id);

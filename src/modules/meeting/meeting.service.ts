@@ -85,11 +85,33 @@ export class MeetingService {
     return this.meetingRepo.findOne({ where: { id } });
   }
 
+  private isPastDate(date: Date): boolean {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const meetingDate = new Date(date);
+    meetingDate.setHours(0, 0, 0, 0);
+    return meetingDate < today;
+  }
+
+  private async autoCompletePastMeetings(meetings: Meeting[]): Promise<void> {
+    const pastScheduled = meetings.filter(
+      (m) => m.status === MEETING_STATUS.SCHEDULED && this.isPastDate(m.date),
+    );
+    if (pastScheduled.length === 0) return;
+    await Promise.all(
+      pastScheduled.map((m) =>
+        this.meetingRepo.update(m.id, { status: MEETING_STATUS.COMPLETED }),
+      ),
+    );
+    pastScheduled.forEach((m) => (m.status = MEETING_STATUS.COMPLETED));
+  }
+
   async getMeetingById(id: string): Promise<Meeting> {
-    const meeting = await this.meetingRepo.findOne({ where: { id } });
+    const meeting = await this.meetingRepo.findOne({ where: { id }, relations: ['agendas'] });
     if (!meeting) {
       throw new NotFoundException('Meeting not found');
     }
+    await this.autoCompletePastMeetings([meeting]);
     return meeting;
   }
 
@@ -135,6 +157,7 @@ export class MeetingService {
       order: { date: 'ASC' },
     });
 
+    await this.autoCompletePastMeetings(meetings);
     return meetings;
   }
   async getUpcomingMeeting(
