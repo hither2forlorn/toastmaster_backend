@@ -23,6 +23,17 @@ export class ClubMemberService {
     private readonly userService: UserService,
   ) {}
 
+  async getPendingMembersForClub(clubId: string): Promise<Partial<ClubMember>[]> {
+    const members = await this.memberRepo.find({
+      where: {
+        clubId,
+        status: MembershipStatus.PENDING,
+      },
+      select: ['id', 'memberName', 'memberEmail', 'dateJoined', 'status', 'role'],
+    });
+    return members;
+  }
+
   async getClubMembers(clubId: string): Promise<ClubMember[]> {
     const members = await this.memberRepo
       .createQueryBuilder('member')
