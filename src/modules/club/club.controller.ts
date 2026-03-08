@@ -200,6 +200,20 @@ export class ClubController {
     return this.clubService.deleteClub(clubId, userId);
   }
 
+  @UseGuards(MembershipGuard)
+  @Get('/:clubId/members/pending')
+  getPendingClubMembers(
+    @Param('clubId') clubId: string,
+    @Req() req,
+  ) {
+    if (req.clubRole !== ClubRole.OWNER && req.clubRole !== ClubRole.ADMIN) {
+      throw new UnauthorizedException(
+        'You are not authorized to view pending members',
+      );
+    }
+    return this.clubMemberService.getPendingMembersForClub(clubId);
+  }
+
   @Get('/:clubId/members')
   getClubMembers(@Param('clubId') clubId: string) {
     return this.clubMemberService.getClubMembers(clubId);
