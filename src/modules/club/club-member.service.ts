@@ -201,6 +201,13 @@ export class ClubMemberService {
     });
     if (!member) throw new NotFoundException('Member not found in this club');
 
+    const club = await this.clubRepo.findOne({ where: { id: clubId } });
+    if (club && member.userId && club.ownerId === member.userId) {
+      throw new BadRequestException(
+        'Cannot remove the club owner. Transfer ownership before removing this member.',
+      );
+    }
+
     await this.memberRepo.delete(memberId);
     return { message: 'Member removed from club successfully' };
   }
