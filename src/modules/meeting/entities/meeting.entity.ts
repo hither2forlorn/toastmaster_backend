@@ -24,6 +24,9 @@ export class Meeting extends BaseEntity {
   @Column({ type: 'varchar', nullable: true, length: 999 })
   notes: string | null;
 
+  @Column({ type: 'simple-array', nullable: true, name: 'social_links' })
+  socialLinks: string[] | null;
+
   @Column({
     type: 'enum',
     enum: MEETING_STATUS,

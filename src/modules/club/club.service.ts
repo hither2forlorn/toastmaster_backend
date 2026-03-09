@@ -65,12 +65,10 @@ export class ClubService {
         'charterDate',
       ],
     });
-    console.log('This is the info of the club ', club);
     if (!club) {
       throw new NotFoundException('Club not found');
     }
 
-    console.log('getting tht info clu', club);
     return club;
   }
 

@@ -1,12 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsDate,
   IsNumber,
+  IsArray,
+  IsUrl,
+  ArrayMaxSize,
 } from 'class-validator';
 
 export class CreateMeetingDto {
@@ -52,4 +54,16 @@ export class CreateMeetingDto {
   @IsString()
   @IsNotEmpty()
   clubId: string;
+
+  @ApiProperty({
+    description: 'Up to 3 social media links for marketing posts',
+    example: ['https://www.facebook.com/share/p/1GEJAbFd4s/'],
+    required: false,
+    isArray: true,
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(3)
+  @IsUrl({}, { each: true })
+  socialLinks?: string[];
 }

@@ -93,7 +93,6 @@ export class ClubController {
   getClubByCode(@Query('code') clubCode: string) {
     return this.clubService.findClubByCode(clubCode);
   }
-  b;
 
   @Get('/stats')
   generateMemberStats(@Query('clubId') clubId: string) {
