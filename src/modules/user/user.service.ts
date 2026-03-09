@@ -91,7 +91,6 @@ export class UserService {
   async getUserClubs(userId: string) {
     const user = await this.userRepo
       .createQueryBuilder('user')
-      .leftJoinAndSelect('user.ownedClubs', 'ownedClubs')
       .leftJoinAndSelect(
         'user.memberships',
         'memberships',
@@ -106,17 +105,7 @@ export class UserService {
       throw new BadRequestException('User not found');
     }
 
-    // Collect all clubs the user owns or is a member of
-    const memberClubs = user.memberships.map((membership) => membership.club);
-    const ownedClubs = user.ownedClubs;
-
-    // Combine and deduplicate by club id
-    const allClubsMap = new Map<string, any>();
-    [...ownedClubs, ...memberClubs].forEach((club) => {
-      allClubsMap.set(club.id, club);
-    });
-
-    return Array.from(allClubsMap.values());
+    return user.memberships.map((membership) => membership.club);
   }
 
   // update profile details for given user id
