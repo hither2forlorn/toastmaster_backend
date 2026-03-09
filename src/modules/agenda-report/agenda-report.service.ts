@@ -151,15 +151,17 @@ export class AgendaReportService {
       INNER JOIN club_member cm ON cm.id = a.member_id
       WHERE
       cm.status = 'active' AND
-        EXISTS (
-          SELECT 1
-          FROM jsonb_array_elements(ar.member_evaluations) AS eval
-          WHERE eval->>'memberId' = $1
-        )
-        OR EXISTS (
-          SELECT 1
-          FROM jsonb_array_elements(ar.filler_word_counts) AS filler
-          WHERE filler->>'memberId' = $1
+        (
+          EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(ar.member_evaluations) AS eval
+            WHERE eval->>'memberId' = $1
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(ar.filler_word_counts) AS filler
+            WHERE filler->>'memberId' = $1
+          )
         );
       `,
       [memberId],
@@ -404,7 +406,7 @@ export class AgendaReportService {
       roleName: report?.roleName,
       status: report?.meeting?.status,
       meeting: allParticipants.map((i) => ({
-        memberId: i?.id || null,
+        memberId: i?.member?.userId || null,
         memberName: i?.memberName,
         userId: i?.member?.userId || null,
         role: i?.roleName,

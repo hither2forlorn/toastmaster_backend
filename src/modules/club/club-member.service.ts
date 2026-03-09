@@ -301,7 +301,6 @@ export class ClubMemberService {
     clubId: string,
     userId: string,
   ): Promise<{ member: boolean; role: ClubRole | null }> {
-    console.log('Getting member role for clubId:', clubId, 'userId:', userId);
     const member = await this.memberRepo.find({
       where: {
         clubId,
@@ -310,8 +309,6 @@ export class ClubMemberService {
       },
       select: ['role'],
     });
-
-    console.log(member);
 
     if (member.length > 0) {
       return { member: true, role: member[0].role };
