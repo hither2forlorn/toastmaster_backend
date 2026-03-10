@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsOptional, IsString, Matches } from 'class-validator';
 
 export class JoinClubByCodeDto {
   @ApiProperty({
@@ -33,4 +33,28 @@ export class AddToClubDto {
   @IsOptional()
   @IsString()
   userId: string;
+
+  @ApiPropertyOptional({
+    example: 'PN-67598269',
+    description: 'Toastmasters International member ID',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Z]{2}-\d+$/, {
+    message: 'Invalid Toastmasters ID format (e.g. PN-67598269)',
+  })
+  toastmasterId?: string;
+}
+
+export class UpdateToastmasterIdDto {
+  @ApiPropertyOptional({
+    example: 'PN-67598269',
+    description: 'Toastmasters International member ID',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Z]{2}-\d+$/, {
+    message: 'Invalid Toastmasters ID format (e.g. PN-67598269)',
+  })
+  toastmasterId: string | null;
 }
