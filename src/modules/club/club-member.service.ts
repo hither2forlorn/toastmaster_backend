@@ -29,7 +29,7 @@ export class ClubMemberService {
         clubId,
         status: MembershipStatus.PENDING,
       },
-      select: ['id', 'memberName', 'memberEmail', 'dateJoined', 'status', 'role'],
+      select: ['id', 'memberName', 'memberEmail', 'dateJoined', 'status', 'role', 'toastmasterId'],
     });
     return members;
   }
@@ -44,6 +44,7 @@ export class ClubMemberService {
         'member.memberEmail',
         'member.dateJoined',
         'member.role',
+        'member.toastmasterId',
         'CASE WHEN member.userId IS NOT NULL THEN true ELSE false END AS "isRegisteredUser"',
         'user.introduction',
       ])
@@ -93,9 +94,10 @@ export class ClubMemberService {
       memberName?: string;
       memberEmail?: string;
       userId?: string;
+      toastmasterId?: string;
     },
   ): Promise<ClubMember> {
-    const { memberName, memberEmail, userId } = options;
+    const { memberName, memberEmail, userId, toastmasterId } = options;
 
     const club = await this.clubRepo.findOne({ where: { id: clubId } });
     if (!club) throw new NotFoundException('Club not found');
@@ -128,6 +130,7 @@ export class ClubMemberService {
       userId: finalUserId,
       role: club.ownerId === finalUserId ? ClubRole.OWNER : ClubRole.MEMBER,
       status: MembershipStatus.ACTIVE,
+      toastmasterId: toastmasterId ?? null,
     });
 
     return await this.memberRepo.save(newMember);
@@ -140,9 +143,10 @@ export class ClubMemberService {
       memberEmail?: string;
       userId?: string;
       addedByOwner?: boolean;
+      toastmasterId?: string;
     },
   ): Promise<ClubMember> {
-    const { memberName, memberEmail, userId, addedByOwner = false } = options;
+    const { memberName, memberEmail, userId, addedByOwner = false, toastmasterId } = options;
 
     const club = await this.clubRepo.findOne({ where: { id: clubId } });
     if (!club) throw new NotFoundException('Club not found');
@@ -187,9 +191,25 @@ export class ClubMemberService {
         addedByOwner || isOwner
           ? MembershipStatus.ACTIVE
           : MembershipStatus.PENDING,
+      toastmasterId: toastmasterId ?? null,
     });
 
     return await this.memberRepo.save(newMember);
+  }
+
+  async updateToastmasterId(
+    memberId: string,
+    clubId: string,
+    toastmasterId: string | null,
+  ): Promise<{ message: string }> {
+    const member = await this.memberRepo.findOne({
+      where: { id: memberId, clubId },
+    });
+    if (!member) throw new NotFoundException('Member not found');
+
+    member.toastmasterId = toastmasterId;
+    await this.memberRepo.save(member);
+    return { message: 'Toastmasters ID updated successfully' };
   }
 
   async removeMemberFromClub(

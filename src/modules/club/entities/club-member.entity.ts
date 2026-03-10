@@ -44,4 +44,7 @@ export class ClubMember extends BaseEntity {
 
   @Column({ default: ClubRole.MEMBER, enum: ClubRole, type: 'enum' })
   role: ClubRole;
+
+  @Column({ name: 'toastmaster_id', type: 'varchar', length: 20, nullable: true, default: null })
+  toastmasterId: string | null;
 }
