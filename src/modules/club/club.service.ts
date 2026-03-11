@@ -63,6 +63,7 @@ export class ClubService {
         'ownerId',
         'clubCode',
         'charterDate',
+        'socialLinks',
       ],
     });
     if (!club) {
