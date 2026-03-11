@@ -42,6 +42,9 @@ export class Club extends BaseEntity {
   @Column({ name: 'charter_date', type: 'date', nullable: true })
   charterDate: Date | null;
 
+  @Column({ type: 'simple-array', nullable: true, name: 'social_links' })
+  socialLinks: string[] | null;
+
   @OneToMany(() => ClubMember, (member) => member.club)
   members: ClubMember[];
 
