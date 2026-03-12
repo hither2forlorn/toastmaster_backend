@@ -21,9 +21,11 @@ export class CreateAgendaDto {
   @ApiProperty({
     description: 'The role name associated with the agenda',
     example: 'President',
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  roleName: string;
+  roleName?: string;
 
   @ApiProperty({
     description: 'The duration of the agenda in minutes',

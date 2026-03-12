@@ -329,7 +329,7 @@ export class AgendaReportService {
     }
 
     const roleType = ['Grammarian', 'Ah Counter'];
-    if (!roleType.includes(report.roleName)) {
+    if (!report.roleName || !roleType.includes(report.roleName)) {
       throw new BadRequestException("Sorry you can't creat this resources");
     }
 

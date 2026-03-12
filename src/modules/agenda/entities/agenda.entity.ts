@@ -20,8 +20,8 @@ export class Agenda extends BaseEntity {
   // @Column({ type: 'date' })
   // date: Date;
 
-  @Column({ name: 'role_name' })
-  roleName: string;
+  @Column({ name: 'role_name', nullable: true, type: 'varchar' })
+  roleName: string | null;
 
   @Column({ type: 'int' })
   duration: number;

@@ -37,6 +37,15 @@ export class AgendaController {
     return this.agendaService.createAgenda(data, clubId);
   }
 
+  @Post('/bulk-create')
+  @ApiOperation({ summary: 'Create multiple agenda items at once' })
+  createAgendasBulk(
+    @Body() agendas: CreateAgendaDto[],
+    @Query('clubId') clubId: string,
+  ) {
+    return this.agendaService.createAgendasBulk(agendas, clubId);
+  }
+
   // Public routes
   @Public()
   @Get('/meeting/:meetingId')
