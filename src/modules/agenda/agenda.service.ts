@@ -36,16 +36,11 @@ export class AgendaService {
   }
 
   // utils function
-  private validateMemberInput(data: CreateAgendaDto) {
-    if (!data.memberId && !data.memberName) {
-      throw new BadRequestException(
-        'Either memberId or memberName must be provided',
-      );
-    }
-  }
-
-  // utils function
   private async resolveMember(data: CreateAgendaDto) {
+    if (!data.memberId && !data.memberName) {
+      return { isGuest: false };
+    }
+
     if (!data.memberId) {
       return { isGuest: true };
     }
@@ -71,7 +66,6 @@ export class AgendaService {
 
   async createAgenda(data: CreateAgendaDto, clubId: string): Promise<Agenda> {
     await this.assertMeetingNotPast(data.meetingId);
-    this.validateMemberInput(data);
 
     const memberData = await this.resolveMember(data);
 
@@ -81,6 +75,23 @@ export class AgendaService {
     });
 
     return this.agendaRepo.save(agenda);
+  }
+
+  async createAgendasBulk(
+    agendas: CreateAgendaDto[],
+    clubId: string,
+  ): Promise<Agenda[]> {
+    if (agendas.length === 0) return [];
+    await this.assertMeetingNotPast(agendas[0].meetingId);
+
+    const created = await Promise.all(
+      agendas.map(async (data) => {
+        const memberData = await this.resolveMember(data);
+        return this.agendaRepo.create({ ...data, ...memberData });
+      }),
+    );
+
+    return this.agendaRepo.save(created);
   }
 
   async getAgendaById(agendaId: string): Promise<Agenda> {
