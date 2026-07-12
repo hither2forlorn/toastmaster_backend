@@ -1,17 +1,79 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { randomUUID } from 'crypto';
 import { User } from 'src/modules/user/entities/user.entity';
 import { Club } from 'src/modules/club/entities/club.entity';
 import { ClubMember } from 'src/modules/club/entities/club-member.entity';
 import { Meeting } from 'src/modules/meeting/entities/meeting.entity';
 import { Agenda } from 'src/modules/agenda/entities/agenda.entity';
-import { AgendaReport } from 'src/modules/agenda-report/entities/agenda-report.entity';
+import { AgendaReport, ReportType } from 'src/modules/agenda-report/entities/agenda-report.entity';
 import { ClubRole } from 'src/modules/club/enum/club-role.enum';
 import { ClubMeetingFrequency } from 'src/modules/club/enum/club-meeting-frequency.enum';
 import { MEETING_STATUS } from 'src/modules/meeting/enum/meeting-status.enum';
-import { ReportType } from 'src/modules/agenda-report/entities/agenda-report.entity';
 import { MembershipStatus } from 'src/modules/club/enum/club-members.enum';
+
+const FIRST_NAMES = [
+  'Ram', 'Sita', 'Hari', 'Gita', 'Arjun', 'Maya', 'Bikram', 'Nisha',
+  'Rajesh', 'Sunita', 'Deepak', 'Anita', 'Kiran', 'Sarita', 'Bishal',
+  'Pooja', 'Aakash', 'Rina', 'Suresh', 'Laxmi', 'Bibek', 'Samikshya',
+  'Rohit', 'Aasha', 'Manoj', 'Priya', 'Sandeep', 'Binita', 'Anil', 'Kamala',
+];
+const LAST_NAMES = [
+  'Sharma', 'Thapa', 'Gurung', 'Tamang', 'Rai', 'Limbu', 'Shrestha',
+  'Pradhan', 'Karki', 'Bista', 'Magar', 'Newar', 'Adhikari', 'Pokharel',
+  'Khadka', 'Poudel', 'Basnet', 'Acharya', 'Dahal', 'Giri',
+];
+const CLUB_NAMES = [
+  'Himalayan Speakers', 'Everest Orators', 'Pokhara Leaders',
+  'Chitwan Communicators', 'Lumbini Toastmasters', 'Gorkhali Club',
+  'Newari Narrators', 'Terai Talkers', 'Annapurna Achievers',
+  'Bagmati Voices', 'Gandaki Guild', 'Karnali Club',
+];
+const VENUES = [
+  'Community Hall', 'Hotel Summit', 'City Library', 'Rotary Hall',
+  'Conference Center', 'Club House', 'Town Hall',
+];
+const THEMES = [
+  'Leadership', 'Confidence', 'Storytelling', 'Innovation', 'Teamwork',
+  'Courage', 'Creativity', 'Resilience', 'Vision', 'Integrity',
+  'Excellence', 'Empathy', 'Motivation', 'Adaptability',
+];
+const ROLES = [
+  'Toastmaster of the Evening', 'Speaker', 'Evaluator', 'Timer',
+  'General Evaluator', 'Table Topics Master', 'Grammarian', 'Ah Counter',
+  'Warmup Master', 'Ballot Counter', 'Toastmaster', 'Invocator',
+];
+const WORDS_OF_DAY = [
+  'Resilience', 'Courage', 'Empathy', 'Vision', 'Integrity',
+  'Innovation', 'Grit', 'Mindfulness', 'Synergy', 'Gratitude',
+];
+const GRAMMAR_NOTES = [
+  'Overall excellent grammar usage by all speakers',
+  'Good use of transitional phrases throughout the meeting',
+  'Speakers used varied vocabulary effectively',
+  'Minor article errors noted; otherwise strong delivery',
+];
+const FILLER_NOTES = [
+  'Members should practice pausing instead of using filler words',
+  'Filler word usage was moderate and improved through the meeting',
+  'Encouraging progress on reducing "um" and "ah"',
+  'Some speakers still rely on filler words under pressure',
+];
+
+const randInt = (min: number, max: number) =>
+  Math.floor(Math.random() * (max - min + 1)) + min;
+const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+const fullName = () => `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`;
+
+function pickN<T>(arr: T[], n: number): T[] {
+  const copy = [...arr];
+  const result: T[] = [];
+  while (result.length < n && copy.length > 0) {
+    result.push(copy.splice(Math.floor(Math.random() * copy.length), 1)[0]);
+  }
+  return result;
+}
 
 @Injectable()
 export class SeederService {
@@ -38,7 +100,6 @@ export class SeederService {
     // Clear existing data in correct order (child tables first)
     console.log('🧹 Clearing existing data...');
 
-    // Start with the most dependent tables
     const existingReports = await this.agendaReportRepository.find();
     if (existingReports.length > 0) {
       await this.agendaReportRepository.remove(existingReports);
@@ -71,7 +132,7 @@ export class SeederService {
 
     console.log('🌱 Starting database seeding...');
 
-    // 1. Create Users
+    // 1. Create Users (original + generated)
     const userOne = this.userRepository.create({
       id: 'ff33b027-150f-4d12-a583-6e0ac79bbfcf',
       email: 'one@sk.com',
@@ -86,10 +147,25 @@ export class SeederService {
       fullName: 'two andonly',
     });
 
-    await this.userRepository.save([userOne, userTwo]);
-    console.log('✅ Users created');
+    const generatedUsers: User[] = [];
+    for (let i = 0; i < 30; i++) {
+      const name = fullName();
+      generatedUsers.push(
+        this.userRepository.create({
+          id: randomUUID(),
+          email: `user${i + 1}@toastmasters.test`,
+          password: 'password123',
+          fullName: name,
+          introduction: `Dedicated toastmaster passionate about public speaking and leadership.`,
+        }),
+      );
+    }
 
-    // 2. Create Clubs
+    const allUsers = [userOne, userTwo, ...generatedUsers];
+    await this.userRepository.save(allUsers);
+    console.log(`✅ Users created (${allUsers.length})`);
+
+    // 2. Create Clubs (original + generated)
     const clubKathmandu = this.clubRepository.create({
       id: 'ad3e1e78-9f75-4c31-9d19-48616a04f886',
       name: 'Kathmandu Toastmasters Club',
@@ -100,6 +176,8 @@ export class SeederService {
       ownerId: userOne.id,
       meetingFrequency: ClubMeetingFrequency.WEEKLY,
       clubCode: 'KTM-TM-001',
+      charterDate: new Date('2018-05-12'),
+      socialLinks: ['https://facebook.com/kathmandu-tm', 'https://kathmandutm.org'],
     });
 
     const clubPatan = this.clubRepository.create({
@@ -112,6 +190,8 @@ export class SeederService {
       ownerId: userOne.id,
       meetingFrequency: ClubMeetingFrequency.BIWEEKLY,
       clubCode: 'PTN-ADV-002',
+      charterDate: new Date('2019-09-01'),
+      socialLinks: ['https://patanadvanced.org'],
     });
 
     const clubBhaktapur = this.clubRepository.create({
@@ -125,12 +205,43 @@ export class SeederService {
       ownerId: userTwo.id,
       meetingFrequency: ClubMeetingFrequency.WEEKLY,
       clubCode: 'BKT-EVE-003',
+      charterDate: new Date('2020-02-20'),
+      socialLinks: ['https://bhaktapurtm.org', 'https://instagram.com/bkt-tm'],
     });
 
-    await this.clubRepository.save([clubKathmandu, clubPatan, clubBhaktapur]);
-    console.log('✅ Clubs created');
+    const generatedClubs: Club[] = [];
+    for (let i = 0; i < CLUB_NAMES.length; i++) {
+      const owner = pick(allUsers);
+      generatedClubs.push(
+        this.clubRepository.create({
+          id: randomUUID(),
+          name: CLUB_NAMES[i],
+          description: `A vibrant toastmasters club focused on ${pick(THEMES).toLowerCase()} and communication excellence`,
+          district: 'District 41',
+          area: `Area ${randInt(1, 6)}`,
+          division: `Division ${pick(['A', 'B', 'C', 'D'])}`,
+          ownerId: owner.id,
+          meetingFrequency: pick([
+            ClubMeetingFrequency.WEEKLY,
+            ClubMeetingFrequency.BIWEEKLY,
+            ClubMeetingFrequency.MONTHLY,
+          ]),
+          clubCode: `SEED-${String(i + 1).padStart(3, '0')}`,
+          charterDate: new Date(2015 + randInt(0, 10), randInt(0, 11), randInt(1, 28)),
+          socialLinks: pick([
+            [`https://facebook.com/${CLUB_NAMES[i].replace(/\s+/g, '-').toLowerCase()}`],
+            [`https://${CLUB_NAMES[i].replace(/\s+/g, '').toLowerCase()}.org`, `https://instagram.com/${CLUB_NAMES[i].replace(/\s+/g, '').toLowerCase()}`],
+            null,
+          ]),
+        }),
+      );
+    }
 
-    // 3. Create Club Members
+    const allClubs = [clubKathmandu, clubPatan, clubBhaktapur, ...generatedClubs];
+    await this.clubRepository.save(allClubs);
+    console.log(`✅ Clubs created (${allClubs.length})`);
+
+    // 3. Create Club Members (original + generated)
     const members = [
       // Kathmandu members
       {
@@ -209,12 +320,60 @@ export class SeederService {
       },
     ];
 
-    await this.clubMemberRepository.save(members);
-    console.log('✅ Club members created');
+    const membersByClub = new Map<string, any[]>();
+    for (const club of allClubs) {
+      membersByClub.set(club.id, []);
+    }
 
-    // 4. Create Meetings
+    for (const club of allClubs) {
+      const clubMembers: any[] = [];
+      // Owner member (skip if one already exists for this club)
+      const ownerUser = allUsers.find((u) => u.id === club.ownerId)!;
+      const ownerExists = members.some(
+        (m) => m.clubId === club.id && m.userId === ownerUser.id,
+      );
+      if (!ownerExists) {
+        clubMembers.push({
+          id: randomUUID(),
+          userId: ownerUser.id,
+          clubId: club.id,
+          memberName: ownerUser.fullName,
+          memberEmail: ownerUser.email,
+          role: ClubRole.OWNER,
+          status: MembershipStatus.ACTIVE,
+        });
+      }
+
+      // Generated guest members
+      const guestCount = randInt(12, 22);
+      for (let i = 0; i < guestCount; i++) {
+        const name = fullName();
+        const guest = {
+          id: randomUUID(),
+          userId: null,
+          clubId: club.id,
+          memberName: name,
+          memberEmail: `member_${club.id.slice(0, 8)}_${i}@toastmasters.test`,
+          role: ClubRole.MEMBER,
+          status: pick([
+            MembershipStatus.ACTIVE,
+            MembershipStatus.ACTIVE,
+            MembershipStatus.ACTIVE,
+            MembershipStatus.PENDING,
+            MembershipStatus.REJECTED,
+          ]),
+        };
+        clubMembers.push(guest);
+      }
+      membersByClub.set(club.id, clubMembers);
+      members.push(...clubMembers);
+    }
+
+    await this.clubMemberRepository.save(members);
+    console.log(`✅ Club members created (${members.length})`);
+
+    // 4. Create Meetings (original + generated)
     const meetings = [
-      // Scheduled meetings
       {
         id: '00000001-1111-1111-1111-111111111111',
         meetingNo: 1,
@@ -226,7 +385,6 @@ export class SeederService {
         status: MEETING_STATUS.SCHEDULED,
         clubId: clubKathmandu.id,
       },
-      // Completed meetings
       {
         id: '00000003-3333-3333-3333-333333333333',
         meetingNo: 3,
@@ -251,12 +409,46 @@ export class SeederService {
       },
     ];
 
-    await this.meetingRepository.save(meetings);
-    console.log('✅ Meetings created');
+    const meetingNoByClub = new Map<string, number>();
+    for (const club of allClubs) {
+      meetingNoByClub.set(club.id, 0);
+    }
 
-    // 5. Create Agendas
+    const completedMeetings: { meeting: any; clubId: string }[] = [];
+    for (const club of allClubs) {
+      const meetingCount = randInt(5, 9);
+      for (let i = 0; i < meetingCount; i++) {
+        const no = (meetingNoByClub.get(club.id) ?? 0) + 1;
+        meetingNoByClub.set(club.id, no);
+        const isCompleted = Math.random() < 0.7;
+        const daysAgo = randInt(0, 400);
+        const date = new Date();
+        date.setDate(date.getDate() - daysAgo);
+        const meeting = {
+          id: randomUUID(),
+          meetingNo: no,
+          theme: pick(THEMES),
+          date,
+          time: pick(['17:30:00', '18:00:00', '18:30:00', '19:00:00']),
+          venue: pick(VENUES),
+          notes: isCompleted
+            ? 'Successfully conducted meeting with engaging sessions'
+            : 'Upcoming meeting - preparations in progress',
+          status: isCompleted ? MEETING_STATUS.COMPLETED : MEETING_STATUS.SCHEDULED,
+          clubId: club.id,
+        };
+        meetings.push(meeting);
+        if (isCompleted) {
+          completedMeetings.push({ meeting, clubId: club.id });
+        }
+      }
+    }
+
+    await this.meetingRepository.save(meetings);
+    console.log(`✅ Meetings created (${meetings.length})`);
+
+    // 5. Create Agendas (original + generated)
     const agendas = [
-      // Meeting 3 agendas
       {
         id: 'a0000006-3333-3333-3333-333333333333',
         title: 'Opening and Introduction',
@@ -295,10 +487,34 @@ export class SeederService {
       },
     ];
 
-    await this.agendaRepository.save(agendas);
-    console.log('✅ Agendas created');
+    const generatedAgendas: { agenda: any; clubId: string }[] = [];
+    for (const { meeting, clubId } of completedMeetings) {
+      const agendaCount = randInt(5, 9);
+      const clubMembers = membersByClub.get(clubId) ?? [];
+      for (let k = 0; k < agendaCount; k++) {
+        const roleName = ROLES[k % ROLES.length];
+        const member = pick(clubMembers);
+        const agenda = {
+          id: randomUUID(),
+          title: `${roleName} Session`,
+          roleName,
+          duration: pick([2, 3, 5, 5, 7, 10]),
+          sequence: k + 1,
+          meetingId: meeting.id,
+          memberId: member.id,
+          memberName: member.memberName,
+          isGuest: !member.userId,
+          notes: `Performed the role of ${roleName} with ${pick(['great', 'good', 'excellent', 'satisfactory'])} results`,
+        };
+        agendas.push(agenda);
+        generatedAgendas.push({ agenda, clubId });
+      }
+    }
 
-    // 6. Create Agenda Reports
+    await this.agendaRepository.save(agendas);
+    console.log(`✅ Agendas created (${agendas.length})`);
+
+    // 6. Create Agenda Reports (original + generated)
     const reports = [
       {
         id: '10000001-0001-0001-0001-000000000001',
@@ -353,8 +569,52 @@ export class SeederService {
       },
     ];
 
+    for (const { agenda, clubId } of generatedAgendas) {
+      const clubMembers = membersByClub.get(clubId) ?? [];
+      if (agenda.roleName === 'Grammarian') {
+        const evals = pickN(clubMembers, randInt(2, 4)).map((m: any) => ({
+          memberId: m.userId ?? null,
+          memberName: m.memberName,
+          wordUsageCount: randInt(0, 6),
+          examples: [
+            `used the word of the day naturally in a story`,
+            `strong contextual usage`,
+          ],
+          grammarIssues: pick(['None', 'Minor: tense shift', 'Used filler word', 'Good article use']),
+        }));
+        reports.push({
+          id: randomUUID(),
+          agendaId: agenda.id,
+          reportType: ReportType.GRAMMARIAN,
+          wordOfTheDay: pick(WORDS_OF_DAY),
+          wordOfTheDayDefinition:
+            'A powerful word chosen to encourage its use throughout the meeting.',
+          grammarNotes: pick(GRAMMAR_NOTES),
+          memberEvaluations: evals,
+          overallNotes: pick(GRAMMAR_NOTES),
+        });
+      } else if (agenda.roleName === 'Ah Counter') {
+        const counts = pickN(clubMembers, randInt(2, 4)).map((m: any) => ({
+          memberId: m.userId ?? null,
+          memberName: m.memberName,
+          ahs: randInt(0, 9),
+          ums: randInt(0, 7),
+          likes: randInt(0, 4),
+          other: randInt(0, 5),
+          notes: pick(FILLER_NOTES),
+        }));
+        reports.push({
+          id: randomUUID(),
+          agendaId: agenda.id,
+          reportType: ReportType.AH_COUNTER,
+          fillerWordCounts: counts,
+          overallNotes: pick(FILLER_NOTES),
+        });
+      }
+    }
+
     await this.agendaReportRepository.save(reports);
-    console.log('✅ Agenda reports created');
+    console.log(`✅ Agenda reports created (${reports.length})`);
 
     console.log('🎉 Database seeding completed successfully!');
   }
