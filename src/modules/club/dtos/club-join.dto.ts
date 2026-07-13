@@ -8,6 +8,16 @@ export class JoinClubByCodeDto {
   })
   @IsString()
   clubCode: string;
+
+  @ApiProperty({
+    example: 'PN-67598269',
+    description: 'Toastmasters International member ID',
+  })
+  @IsString()
+  @Matches(/^[A-Z]{2}-\d+$/, {
+    message: 'Invalid Toastmasters ID format (e.g. PN-67598269)',
+  })
+  toastmasterId: string;
 }
 
 export class AddToClubDto {

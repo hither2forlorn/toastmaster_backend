@@ -111,6 +111,14 @@ export class ClubMemberService {
       finalName = user.fullName;
       finalEmail = user.email;
       finalUserId = user.id;
+    } else if (finalEmail) {
+      const user = await this.userService.findOrCreateByEmail(
+        finalName ?? finalEmail,
+        finalEmail,
+      );
+      finalName = user.fullName;
+      finalEmail = user.email;
+      finalUserId = user.id;
     }
 
     const existing = await this.memberRepo.findOne({
@@ -139,11 +147,11 @@ export class ClubMemberService {
   async addMemberToClubV2(
     clubId: string,
     options: {
-      memberName?: string;
-      memberEmail?: string;
+      memberName: string;
+      memberEmail: string;
       userId?: string;
       addedByOwner?: boolean;
-      toastmasterId?: string;
+      toastmasterId: string;
     },
   ): Promise<ClubMember> {
     const { memberName, memberEmail, userId, addedByOwner = false, toastmasterId } = options;
@@ -157,6 +165,14 @@ export class ClubMemberService {
 
     if (userId) {
       const user = await this.userService.getUserById(userId);
+      finalName = user.fullName;
+      finalEmail = user.email;
+      finalUserId = user.id;
+    } else if (finalEmail) {
+      const user = await this.userService.findOrCreateByEmail(
+        finalName ?? finalEmail,
+        finalEmail,
+      );
       finalName = user.fullName;
       finalEmail = user.email;
       finalUserId = user.id;
@@ -249,6 +265,7 @@ export class ClubMemberService {
   async joinClubByCodeV2(
     clubCode: string,
     userId: string,
+    toastmasterId: string,
   ): Promise<ClubMember> {
     const club = await this.clubRepo.findOne({ where: { clubCode } });
     if (!club) throw new NotFoundException('Club not found with this code');
@@ -273,8 +290,13 @@ export class ClubMemberService {
       }
     }
 
+    const user = await this.userService.getUserById(userId);
+
     return await this.addMemberToClubV2(club.id, {
       userId,
+      memberName: user.fullName,
+      memberEmail: user.email,
+      toastmasterId,
       addedByOwner: false,
     });
   }

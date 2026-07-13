@@ -118,6 +118,7 @@ export class ClubController {
     return this.clubMemberService.joinClubByCodeV2(
       joinClubByCodeDto.clubCode,
       userId,
+      joinClubByCodeDto.toastmasterId,
     );
   }
 

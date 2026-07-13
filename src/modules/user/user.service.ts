@@ -25,6 +25,18 @@ export class UserService {
     return this.userRepo.save(user);
   }
 
+  async findOrCreateByEmail(fullName: string, email: string): Promise<User> {
+    const existing = await this.userRepo.findOneBy({ email });
+    if (existing) return existing;
+
+    const user = this.userRepo.create({
+      fullName,
+      email,
+      password: 'Password123',
+    });
+    return this.userRepo.save(user);
+  }
+
   async getUserById(userId: string): Promise<User> {
     const user = await this.userRepo.findOneBy({ id: userId });
     if (!user) {
