@@ -2,6 +2,7 @@ import { BaseEntity } from 'src/common/entities/base.entity';
 import { Club } from 'src/modules/club/entities/club.entity';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { MEETING_STATUS } from '../enum/meeting-status.enum';
+import { MEETING_TYPE } from '../enum/meeting-type.enum';
 import { Agenda } from 'src/modules/agenda/entities/agenda.entity';
 
 @Entity('meetings')
@@ -33,6 +34,14 @@ export class Meeting extends BaseEntity {
     default: MEETING_STATUS.SCHEDULED,
   })
   status: MEETING_STATUS;
+
+  @Column({
+    name:"meeting_type",
+    type: 'enum',
+    enum: MEETING_TYPE,
+    default: MEETING_TYPE.PHYSICAL,
+  })
+  meetingType: MEETING_TYPE;
 
   @Column({ name: 'club_id' })
   clubId: string;

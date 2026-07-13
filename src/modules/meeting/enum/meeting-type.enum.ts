@@ -1,0 +1,5 @@
+export enum MEETING_TYPE {
+  ONLINE = 'ONLINE',
+  PHYSICAL = 'PHYSICAL',
+  HYBRID = 'HYBRID',
+}
