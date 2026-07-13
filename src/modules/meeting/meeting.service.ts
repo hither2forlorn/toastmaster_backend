@@ -251,6 +251,7 @@ export class MeetingService {
           notes: meetingData.notes ?? undefined,
           clubId: meetingData.clubId,
           status: meetingData.status,
+          meetingType: meetingData.meetingType,
         });
 
         const savedMeeting = await transactionalEntityManager.save(meeting);

@@ -8,8 +8,10 @@ import {
   IsNumber,
   IsArray,
   IsUrl,
+  IsEnum,
   ArrayMaxSize,
 } from 'class-validator';
+import { MEETING_TYPE } from '../enum/meeting-type.enum';
 
 export class CreateMeetingDto {
   @ApiProperty({ description: 'Meeting number', example: 1 })
@@ -54,6 +56,15 @@ export class CreateMeetingDto {
   @IsString()
   @IsNotEmpty()
   clubId: string;
+
+  @ApiProperty({
+    description: 'Type of the meeting',
+    enum: MEETING_TYPE,
+    example: MEETING_TYPE.PHYSICAL,
+  })
+  @IsEnum(MEETING_TYPE)
+  @IsNotEmpty()
+  meetingType: MEETING_TYPE;
 
   @ApiProperty({
     description: 'Up to 3 social media links for marketing posts',

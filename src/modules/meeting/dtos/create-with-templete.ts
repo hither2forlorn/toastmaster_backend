@@ -15,6 +15,7 @@ import {
   IsBoolean,
 } from 'class-validator';
 import { MEETING_STATUS } from '../enum/meeting-status.enum';
+import { MEETING_TYPE } from '../enum/meeting-type.enum';
 
 class AgendaItemDto {
   @ApiProperty({
@@ -140,6 +141,15 @@ export class CreateMeetingWithTemplateDto {
   })
   @IsEnum(MEETING_STATUS)
   status: MEETING_STATUS;
+
+  @ApiProperty({
+    description: 'Type of the meeting',
+    enum: MEETING_TYPE,
+    example: MEETING_TYPE.PHYSICAL,
+  })
+  @IsEnum(MEETING_TYPE)
+  @IsNotEmpty()
+  meetingType: MEETING_TYPE;
 
   @ApiProperty({
     description: 'Time of the meeting in HH:mm:ss format',

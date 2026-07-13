@@ -39,6 +39,7 @@ describe('Meeting (e2e)', () => {
         time: '18:00:00',
         venue: 'Hall A',
         clubId,
+        meetingType: 'PHYSICAL',
       })
       .expect(201);
     meetingId = meetingRes.body.data.id;
@@ -80,6 +81,7 @@ describe('Meeting (e2e)', () => {
         time: '19:00:00',
         venue: 'Hall B',
         clubId,
+        meetingType: 'PHYSICAL',
       })
       .expect(201);
     expect(res.body.data.id).toBeDefined();
@@ -96,6 +98,7 @@ describe('Meeting (e2e)', () => {
         time: '19:00:00',
         // venue intentionally omitted
         clubId,
+        meetingType: 'PHYSICAL',
       })
       .expect(400);
     expect(res.body.status).toBe(400);
