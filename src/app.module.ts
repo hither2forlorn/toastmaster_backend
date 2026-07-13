@@ -16,6 +16,7 @@ import { AgendaTemplateModule } from './modules/agenda-template/agenda-template.
 import { AgendaModule } from './modules/agenda/agenda.module';
 import { AgendaReportModule } from './modules/agenda-report/agenda-report.module';
 import { SeederModule } from './database/seeder/seeder.module';
+import { RoleModule } from './modules/role/role.module';
 
 // Detect environment
 const isProduction = process.env.NODE_ENV === 'production';
@@ -39,6 +40,7 @@ const isProduction = process.env.NODE_ENV === 'production';
     AgendaModule,
     AgendaReportModule,
     SeederModule,
+    RoleModule,
   ],
   providers: [
     {
