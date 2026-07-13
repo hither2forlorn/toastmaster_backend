@@ -61,4 +61,4 @@ pnpm-workspace.yaml
 AGENTS.md
 .env.test
 
-self
+system

@@ -66,6 +66,15 @@ const randInt = (min: number, max: number) =>
 const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const fullName = () => `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`;
 
+const tmCounterByClub = new Map<string, number>();
+const nextToastmasterId = (clubCode: string): string => {
+  const prefix = clubCode.split('-')[0].slice(0, 2).toUpperCase();
+  const current = tmCounterByClub.get(clubCode) ?? 10000000;
+  const next = current + 1;
+  tmCounterByClub.set(clubCode, next);
+  return `${prefix}-${next}`;
+};
+
 function pickN<T>(arr: T[], n: number): T[] {
   const copy = [...arr];
   const result: T[] = [];
@@ -252,6 +261,7 @@ export class SeederService {
         memberEmail: 'one@sk.com',
         role: ClubRole.OWNER,
         status: MembershipStatus.ACTIVE,
+        toastmasterId: nextToastmasterId(clubKathmandu.clubCode),
       },
       {
         id: '22222222-2222-2222-2222-222222222222',
@@ -261,6 +271,7 @@ export class SeederService {
         memberEmail: 'two@sk.com',
         role: ClubRole.MEMBER,
         status: MembershipStatus.ACTIVE,
+        toastmasterId: nextToastmasterId(clubKathmandu.clubCode),
       },
       {
         id: '33333333-3333-3333-3333-333333333333',
@@ -270,6 +281,7 @@ export class SeederService {
         memberEmail: 'ram@guest.com',
         role: ClubRole.MEMBER,
         status: MembershipStatus.ACTIVE,
+        toastmasterId: nextToastmasterId(clubKathmandu.clubCode),
       },
       // Patan members
       {
@@ -280,6 +292,7 @@ export class SeederService {
         memberEmail: 'one@sk.com',
         role: ClubRole.OWNER,
         status: MembershipStatus.ACTIVE,
+        toastmasterId: nextToastmasterId(clubPatan.clubCode),
       },
       {
         id: '55555555-5555-5555-5555-555555555555',
@@ -289,6 +302,7 @@ export class SeederService {
         memberEmail: 'sita@guest.com',
         role: ClubRole.MEMBER,
         status: MembershipStatus.ACTIVE,
+        toastmasterId: nextToastmasterId(clubPatan.clubCode),
       },
       // Bhaktapur members
       {
@@ -299,6 +313,7 @@ export class SeederService {
         memberEmail: 'two@sk.com',
         role: ClubRole.OWNER,
         status: MembershipStatus.ACTIVE,
+        toastmasterId: nextToastmasterId(clubBhaktapur.clubCode),
       },
       {
         id: '77777777-7777-7777-7777-777777777777',
@@ -308,6 +323,7 @@ export class SeederService {
         memberEmail: 'one@sk.com',
         role: ClubRole.MEMBER,
         status: MembershipStatus.ACTIVE,
+        toastmasterId: nextToastmasterId(clubBhaktapur.clubCode),
       },
       {
         id: '88888888-8888-8888-8888-888888888888',
@@ -317,6 +333,7 @@ export class SeederService {
         memberEmail: 'hari@guest.com',
         role: ClubRole.MEMBER,
         status: MembershipStatus.ACTIVE,
+        toastmasterId: nextToastmasterId(clubBhaktapur.clubCode),
       },
     ];
 
@@ -341,6 +358,7 @@ export class SeederService {
           memberEmail: ownerUser.email,
           role: ClubRole.OWNER,
           status: MembershipStatus.ACTIVE,
+          toastmasterId: nextToastmasterId(club.clubCode),
         });
       }
 
@@ -354,6 +372,7 @@ export class SeederService {
           clubId: club.id,
           memberName: name,
           memberEmail: `member_${club.id.slice(0, 8)}_${i}@toastmasters.test`,
+          toastmasterId: nextToastmasterId(club.clubCode),
           role: ClubRole.MEMBER,
           status: pick([
             MembershipStatus.ACTIVE,
