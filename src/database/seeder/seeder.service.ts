@@ -275,10 +275,10 @@ export class SeederService {
       },
       {
         id: '33333333-3333-3333-3333-333333333333',
-        userId: null,
+        userId: generatedUsers[0].id,
         clubId: clubKathmandu.id,
-        memberName: 'Guest Speaker Ram',
-        memberEmail: 'ram@guest.com',
+        memberName: generatedUsers[0].fullName,
+        memberEmail: generatedUsers[0].email,
         role: ClubRole.MEMBER,
         status: MembershipStatus.ACTIVE,
         toastmasterId: nextToastmasterId(clubKathmandu.clubCode),
@@ -296,10 +296,10 @@ export class SeederService {
       },
       {
         id: '55555555-5555-5555-5555-555555555555',
-        userId: null,
+        userId: generatedUsers[1].id,
         clubId: clubPatan.id,
-        memberName: 'Sita Sharma',
-        memberEmail: 'sita@guest.com',
+        memberName: generatedUsers[1].fullName,
+        memberEmail: generatedUsers[1].email,
         role: ClubRole.MEMBER,
         status: MembershipStatus.ACTIVE,
         toastmasterId: nextToastmasterId(clubPatan.clubCode),
@@ -327,10 +327,10 @@ export class SeederService {
       },
       {
         id: '88888888-8888-8888-8888-888888888888',
-        userId: null,
+        userId: generatedUsers[2].id,
         clubId: clubBhaktapur.id,
-        memberName: 'Hari Prasad',
-        memberEmail: 'hari@guest.com',
+        memberName: generatedUsers[2].fullName,
+        memberEmail: generatedUsers[2].email,
         role: ClubRole.MEMBER,
         status: MembershipStatus.ACTIVE,
         toastmasterId: nextToastmasterId(clubBhaktapur.clubCode),
@@ -362,16 +362,26 @@ export class SeederService {
         });
       }
 
-      // Generated guest members
+      // Generated members — only registered users (no auto-registered guests)
+      const existingMemberUserIds = members
+        .filter((m) => m.clubId === club.id && m.userId != null)
+        .map((m) => m.userId);
+      existingMemberUserIds.push(ownerUser.id);
+      const candidateUsers = allUsers.filter(
+        (u) => !existingMemberUserIds.includes(u.id),
+      );
       const guestCount = randInt(12, 22);
-      for (let i = 0; i < guestCount; i++) {
-        const name = fullName();
-        const guest = {
+      const pickedUsers = pickN(
+        candidateUsers,
+        Math.min(guestCount, candidateUsers.length),
+      );
+      for (const u of pickedUsers) {
+        clubMembers.push({
           id: randomUUID(),
-          userId: null,
+          userId: u.id,
           clubId: club.id,
-          memberName: name,
-          memberEmail: `member_${club.id.slice(0, 8)}_${i}@toastmasters.test`,
+          memberName: u.fullName,
+          memberEmail: u.email,
           toastmasterId: nextToastmasterId(club.clubCode),
           role: ClubRole.MEMBER,
           status: pick([
@@ -381,8 +391,7 @@ export class SeederService {
             MembershipStatus.PENDING,
             MembershipStatus.REJECTED,
           ]),
-        };
-        clubMembers.push(guest);
+        });
       }
       membersByClub.set(club.id, clubMembers);
       members.push(...clubMembers);
@@ -500,8 +509,8 @@ export class SeederService {
         sequence: 3,
         meetingId: '00000003-3333-3333-3333-333333333333',
         memberId: '33333333-3333-3333-3333-333333333333',
-        memberName: 'Guest Speaker Ram',
-        isGuest: true,
+        memberName: generatedUsers[0].fullName,
+        isGuest: false,
         notes: 'Tracked filler words effectively',
       },
     ];
