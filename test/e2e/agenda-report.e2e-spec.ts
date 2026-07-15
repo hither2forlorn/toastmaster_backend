@@ -58,7 +58,7 @@ describe('Agenda Report (e2e)', () => {
     const member = membersRes.body.data.find(
       (m: any) => m.member_member_name === user.fullName,
     );
-    memberId = member.member_id;
+    memberId = member.user_id;
 
     await authed(app, token)
       .post(`/${API_PREFIX}/agenda/create?clubId=${clubId}`)

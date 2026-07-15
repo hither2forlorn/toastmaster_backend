@@ -50,8 +50,8 @@ export class CreateAgendaDto {
   meetingId: string;
 
   @ApiProperty({
-    description: 'The ID of the member (optional)',
-    example: 'member-123',
+    description: 'The ID of the user (optional)',
+    example: 'user-123',
     required: false,
   })
   @IsOptional()

@@ -5,7 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AgendaReport, ReportType } from './entities/agenda-report.entity';
+import {
+  AgendaReport,
+  ReportType,
+  MemberEvaluation,
+  FillerWordCount,
+} from './entities/agenda-report.entity';
 import { Repository } from 'typeorm';
 import { AgendaService } from '../agenda/agenda.service';
 import {
@@ -135,7 +140,7 @@ export class AgendaReportService {
         ar.grammar_notes,
         ar.overall_notes,
         a.meeting_id,
-        cm.club_id,
+        m.club_id,
         (
           SELECT jsonb_agg(eval)
           FROM jsonb_array_elements(ar.member_evaluations) AS eval
@@ -148,7 +153,8 @@ export class AgendaReportService {
         ) AS filler_word_counts
       FROM agenda_reports ar
       INNER JOIN agendas a ON a.id = ar.agenda_id
-      INNER JOIN club_member cm ON cm.id = a.member_id
+      INNER JOIN meetings m ON m.id = a.meeting_id
+      INNER JOIN club_member cm ON cm.user_id = a.member_id AND cm.club_id = m.club_id
       WHERE
       cm.status = 'active' AND
         (
@@ -180,7 +186,12 @@ export class AgendaReportService {
     const reportData = await this.agendaReportRepo
       .createQueryBuilder('ar')
       .innerJoin('agendas', 'a', 'a.id = ar.agenda_id')
-      .innerJoin('club_member', 'cm', 'cm.id = a.member_id')
+      .innerJoin('meetings', 'mt', 'mt.id = a.meeting_id')
+      .innerJoin(
+        'club_member',
+        'cm',
+        'cm.user_id = a.member_id AND cm.club_id = mt.club_id',
+      )
       .select('ar.id', 'reportId')
       .addSelect('cm.user_id', 'userId')
       .where('ar.id = :reportId', { reportId })
@@ -219,7 +230,7 @@ export class AgendaReportService {
         'No agenda report found with given report id',
       );
     }
-    if (report.agenda.member?.userId !== userId) {
+    if (report.agenda.member?.id !== userId) {
       throw new ForbiddenException('You cannot modify this resource');
     }
 
@@ -262,7 +273,7 @@ export class AgendaReportService {
       );
     }
 
-    if (report.agenda.member?.userId !== userId) {
+    if (report.agenda.member?.id !== userId) {
       throw new ForbiddenException('You cannot modify this resource');
     }
 
@@ -339,16 +350,16 @@ export class AgendaReportService {
     }
 
     const isReportExist = await this.agendaReportRepo.findOne({
-      where: {
-        agenda: {
-          meetingId: meetingId,
-          member: {
-            userId: userId,
+        where: {
+          agenda: {
+            meetingId: meetingId,
+            member: {
+              id: userId,
+              isDeleted: false,
+            },
             isDeleted: false,
           },
-          isDeleted: false,
         },
-      },
       // relations: ['agenda', 'agenda.member'],
     });
     // return isReportExist;
@@ -370,17 +381,21 @@ export class AgendaReportService {
       });
 
       if (isReportExist?.memberEvaluations) {
-        isReportExist?.memberEvaluations.forEach((m: MemberEvaluationDto) => {
-          const role = memberIdRoleMap.get(m?.memberId);
-          if (role) {
-            m.role = role;
+        isReportExist.memberEvaluations.forEach((m: MemberEvaluation) => {
+          if (m.memberId) {
+            const role = memberIdRoleMap.get(m.memberId);
+            if (role) {
+              m.role = role;
+            }
           }
         });
       } else if (isReportExist?.fillerWordCounts) {
-        isReportExist?.fillerWordCounts.forEach((m: MemberEvaluationDto) => {
-          const role = memberIdRoleMap.get(m?.memberId);
-          if (role) {
-            m.role = role;
+        isReportExist.fillerWordCounts.forEach((m: FillerWordCount) => {
+          if (m.memberId) {
+            const role = memberIdRoleMap.get(m.memberId);
+            if (role) {
+              m.role = role;
+            }
           }
         });
       }
@@ -406,9 +421,9 @@ export class AgendaReportService {
       roleName: report?.roleName,
       status: report?.meeting?.status,
       meeting: allParticipants.map((i) => ({
-        memberId: i?.member?.userId || null,
+        memberId: i?.member?.id || null,
         memberName: i?.memberName,
-        userId: i?.member?.userId || null,
+        userId: i?.member?.id || null,
         role: i?.roleName,
       })),
       report: null,

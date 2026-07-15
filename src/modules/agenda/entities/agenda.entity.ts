@@ -1,5 +1,5 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { ClubMember } from 'src/modules/club/entities/club-member.entity';
+import { User } from 'src/modules/user/entities/user.entity';
 import { Meeting } from 'src/modules/meeting/entities/meeting.entity';
 import {
   Column,
@@ -48,7 +48,7 @@ export class Agenda extends BaseEntity {
   @JoinColumn({ name: 'meeting_id' })
   meeting: Meeting;
 
-  @ManyToOne(() => ClubMember)
+  @ManyToOne(() => User)
   @JoinColumn({ name: 'member_id' })
-  member?: ClubMember;
+  member?: User;
 }

@@ -36,7 +36,7 @@ export class AgendaService {
   }
 
   // utils function
-  private async resolveMember(data: CreateAgendaDto) {
+  private async resolveMember(data: CreateAgendaDto, clubId: string) {
     if (!data.memberId && !data.memberName) {
       return { isGuest: false };
     }
@@ -45,20 +45,15 @@ export class AgendaService {
       return { isGuest: true };
     }
 
-    const member = await this.memberService.getMemberById(data.memberId);
+    const membership = await this.memberService.getMemberRole(
+      clubId,
+      data.memberId,
+    );
 
-    if (member.userId) {
-      const clubs = await this.memberService.getUserClubs(member.userId);
-      console.log(clubs);
-      const clubIds = clubs.map((c) => c.id);
-
-      console.log(clubIds);
-
-      if (!clubIds.includes(member.clubId)) {
-        throw new BadRequestException(
-          'Member does not belong to the specified club',
-        );
-      }
+    if (!membership.member) {
+      throw new BadRequestException(
+        'Member does not belong to the specified club',
+      );
     }
 
     return { isGuest: false };
@@ -67,7 +62,7 @@ export class AgendaService {
   async createAgenda(data: CreateAgendaDto, clubId: string): Promise<Agenda> {
     await this.assertMeetingNotPast(data.meetingId);
 
-    const memberData = await this.resolveMember(data);
+    const memberData = await this.resolveMember(data, clubId);
 
     const agenda = this.agendaRepo.create({
       ...data,
@@ -86,7 +81,7 @@ export class AgendaService {
 
     const created = await Promise.all(
       agendas.map(async (data) => {
-        const memberData = await this.resolveMember(data);
+        const memberData = await this.resolveMember(data, clubId);
         return this.agendaRepo.create({ ...data, ...memberData });
       }),
     );
@@ -107,12 +102,12 @@ export class AgendaService {
     const agendas = await this.agendaRepo.find({
       where: { meetingId },
       order: { sequence: 'ASC' },
-      relations: ['member', 'member.user'],
+      relations: ['member'],
     });
-    // For club-member assignments, always use the current name from the User table
+    // For registered-member assignments, always use the current name from the User table
     return agendas.map((agenda) => {
-      if (!agenda.isGuest && agenda.member?.user) {
-        agenda.memberName = agenda.member.user.fullName;
+      if (!agenda.isGuest && agenda.member) {
+        agenda.memberName = agenda.member.fullName;
       }
       return agenda;
     });
@@ -176,8 +171,7 @@ export class AgendaService {
     const roleCounts = await this.agendaRepo
       .createQueryBuilder('agenda')
       .innerJoin('agenda.meeting', 'meeting')
-      .leftJoin('club_member', 'member', 'member.id = agenda.member_id')
-      .leftJoin('users', 'u', 'u.id = member.user_id')
+      .leftJoin('users', 'u', 'u.id = agenda.member_id')
       .select('agenda.roleName', 'role')
       .addSelect("COALESCE(u.full_name, agenda.member_name)", 'memberName')
       .addSelect('COUNT(agenda.roleName)', 'count')
@@ -232,7 +226,11 @@ export class AgendaService {
     const agenda = await this.agendaRepo
       .createQueryBuilder('a')
       .innerJoin('meetings', 'm', 'm.id = a.meeting_id')
-      .innerJoin('club_member', 'cm', 'cm.id = a.member_id')
+      .innerJoin(
+        'club_member',
+        'cm',
+        'cm.user_id = a.member_id AND cm.club_id = m.club_id',
+      )
       .select('a.id', 'agendaId')
       .addSelect('a.member_id', 'memberId')
       .addSelect('cm.user_id', 'userId')
@@ -262,7 +260,7 @@ export class AgendaService {
         meetingId: meetingId,
         roleName: In(['Grammarian', 'Ah Counter']),
         member: {
-          userId,
+          id: userId,
         },
       },
       relations: ['member', 'meeting'],

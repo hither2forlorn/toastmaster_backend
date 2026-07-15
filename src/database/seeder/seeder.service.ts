@@ -492,7 +492,7 @@ export class SeederService {
           duration: pick([2, 3, 5, 5, 7, 10]),
           sequence: k + 1,
           meetingId: meeting.id,
-          memberId: member.id,
+          memberId: member.userId,
           memberName: userIdToName.get(member.userId) ?? '',
           isGuest: false,
           notes: `Performed the role of ${roleName} with ${pick(['great', 'good', 'excellent', 'satisfactory'])} results`,
