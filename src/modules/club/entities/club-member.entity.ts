@@ -6,20 +6,13 @@ import { ClubRole } from '../enum/club-role.enum';
 import { MembershipStatus } from '../enum/club-members.enum';
 
 @Entity()
-@Unique(['clubId', 'memberEmail'])
 @Unique(['clubId', 'userId'])
 export class ClubMember extends BaseEntity {
-  @Column({ nullable: true, name: 'user_id' })
-  userId: string | null;
+  @Column({ nullable: false, name: 'user_id' })
+  userId: string;
 
   @Column({ name: 'club_id' })
   clubId: string;
-
-  @Column({ length: 100, name: 'member_name' })
-  memberName: string;
-
-  @Column({ length: 100, name: 'member_email' })
-  memberEmail: string;
 
   @Column({
     name: 'date_joined',
@@ -38,13 +31,10 @@ export class ClubMember extends BaseEntity {
   @JoinColumn({ name: 'club_id' })
   club: Club;
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne(() => User, { nullable: false })
   @JoinColumn({ name: 'user_id' })
-  user: User | null;
+  user: User;
 
   @Column({ default: ClubRole.MEMBER, enum: ClubRole, type: 'enum' })
   role: ClubRole;
-
-  @Column({ name: 'toastmaster_id', type: 'varchar', length: 20, nullable: true, default: null })
-  toastmasterId: string | null;
 }

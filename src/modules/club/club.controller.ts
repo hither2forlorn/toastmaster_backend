@@ -18,7 +18,7 @@ import { CreateClubDto } from './dtos/create-club.dto';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { UpdateClubDto } from './dtos/update-club-dto';
 import { ClubMemberService } from './club-member.service';
-import { AddToClubDto, JoinClubByCodeDto, UpdateToastmasterIdDto } from './dtos/club-join.dto';
+import { AddToClubDto, JoinClubByCodeDto } from './dtos/club-join.dto';
 import { MembershipGuard } from 'src/common/guards/membership.guard';
 import { ClubRole } from './enum/club-role.enum';
 import {
@@ -118,7 +118,6 @@ export class ClubController {
     return this.clubMemberService.joinClubByCodeV2(
       joinClubByCodeDto.clubCode,
       userId,
-      joinClubByCodeDto.toastmasterId,
     );
   }
 
@@ -231,27 +230,7 @@ export class ClubController {
         'You are not authorized to add members to this club',
       );
     }
-    return this.clubMemberService.addMemberToClub(clubId, body);
-  }
-
-  @UseGuards(MembershipGuard)
-  @Patch('/:clubId/member/:memberId/toastmaster-id')
-  updateToastmasterId(
-    @Param('clubId') clubId: string,
-    @Param('memberId') memberId: string,
-    @Body() body: UpdateToastmasterIdDto,
-    @Req() req,
-  ) {
-    if (req.clubRole !== ClubRole.OWNER && req.clubRole !== ClubRole.ADMIN) {
-      throw new UnauthorizedException(
-        'You are not authorized to update member details in this club',
-      );
-    }
-    return this.clubMemberService.updateToastmasterId(
-      memberId,
-      clubId,
-      body.toastmasterId,
-    );
+    return this.clubMemberService.addMemberToClubByEmail(clubId, body);
   }
 
   @UseGuards(MembershipGuard)

@@ -23,15 +23,34 @@ export class ClubMemberService {
     private readonly userService: UserService,
   ) {}
 
-  async getPendingMembersForClub(clubId: string): Promise<Partial<ClubMember>[]> {
-    const members = await this.memberRepo.find({
-      where: {
-        clubId,
-        status: MembershipStatus.PENDING,
-      },
-      select: ['id', 'memberName', 'memberEmail', 'dateJoined', 'status', 'role', 'toastmasterId'],
-    });
-    return members;
+  async getPendingMembersForClub(clubId: string): Promise<any[]> {
+    const members = await this.memberRepo
+      .createQueryBuilder('member')
+      .leftJoin('member.user', 'user')
+      .select([
+        'member.id',
+        'member.clubId',
+        'member.userId',
+        'member.dateJoined',
+        'member.status',
+        'member.role',
+        'user.fullName AS memberName',
+        'user.email AS memberEmail',
+      ])
+      .where('member.clubId = :clubId', { clubId })
+      .andWhere('member.status = :status', { status: MembershipStatus.PENDING })
+      .getRawMany();
+
+    return members.map((m) => ({
+      id: m.member_id,
+      clubId: m.member_clubId,
+      userId: m.member_userId,
+      memberName: m.memberName,
+      memberEmail: m.memberEmail,
+      dateJoined: m.member_dateJoined,
+      status: m.member_status,
+      role: m.member_role,
+    }));
   }
 
   async getClubMembers(clubId: string): Promise<ClubMember[]> {
@@ -40,20 +59,22 @@ export class ClubMemberService {
       .leftJoin('member.user', 'user')
       .select([
         'member.id',
-        'member.memberName',
-        'member.memberEmail',
+        'member.clubId',
+        'member.userId',
         'member.dateJoined',
         'member.role',
-        'member.toastmasterId',
-        'CASE WHEN member.userId IS NOT NULL THEN true ELSE false END AS "isRegisteredUser"',
+        'member.status',
+        'user.fullName AS memberName',
+        'user.email AS memberEmail',
         'user.introduction',
+        'CASE WHEN member.userId IS NOT NULL THEN true ELSE false END AS "isRegisteredUser"',
       ])
       .where('member.clubId = :clubId', { clubId })
       .andWhere('member.status = :status', { status: MembershipStatus.ACTIVE })
       .orderBy('member.dateJoined', 'ASC')
       .getRawMany();
 
-    if (!members) {
+    if (!members || members.length === 0) {
       throw new NotFoundException('No members found for this club');
     }
 
@@ -90,42 +111,15 @@ export class ClubMemberService {
 
   async addMemberToClub(
     clubId: string,
-    options: {
-      memberName?: string;
-      memberEmail?: string;
-      userId?: string;
-      toastmasterId?: string;
-    },
+    options: { userId: string },
   ): Promise<ClubMember> {
-    const { memberName, memberEmail, userId, toastmasterId } = options;
+    const { userId } = options;
 
     const club = await this.clubRepo.findOne({ where: { id: clubId } });
     if (!club) throw new NotFoundException('Club not found');
 
-    let finalName = memberName;
-    let finalEmail = memberEmail;
-    let finalUserId = userId || null;
-
-    if (userId) {
-      const user = await this.userService.getUserById(userId);
-      finalName = user.fullName;
-      finalEmail = user.email;
-      finalUserId = user.id;
-    } else if (finalEmail) {
-      const user = await this.userService.findOrCreateByEmail(
-        finalName ?? finalEmail,
-        finalEmail,
-      );
-      finalName = user.fullName;
-      finalEmail = user.email;
-      finalUserId = user.id;
-    }
-
     const existing = await this.memberRepo.findOne({
-      where: [
-        ...(finalUserId ? [{ clubId, userId: finalUserId }] : []),
-        { clubId, memberEmail: finalEmail },
-      ],
+      where: { clubId, userId },
     });
 
     if (existing)
@@ -133,56 +127,41 @@ export class ClubMemberService {
 
     const newMember = this.memberRepo.create({
       clubId,
-      memberName: finalName,
-      memberEmail: finalEmail,
-      userId: finalUserId,
-      role: club.ownerId === finalUserId ? ClubRole.OWNER : ClubRole.MEMBER,
+      userId,
+      role: club.ownerId === userId ? ClubRole.OWNER : ClubRole.MEMBER,
       status: MembershipStatus.ACTIVE,
-      toastmasterId: toastmasterId ?? null,
     });
 
     return await this.memberRepo.save(newMember);
   }
 
+  // Owner adds a member by name + email; resolves to a userId via email
+  // lookup (existing user) or creates a new user when none is found.
+  async addMemberToClubByEmail(
+    clubId: string,
+    options: { memberName: string; memberEmail: string },
+  ): Promise<ClubMember> {
+    const { memberName, memberEmail } = options;
+
+    const user = await this.userService.findOrCreateByEmail(
+      memberName,
+      memberEmail,
+    );
+
+    return this.addMemberToClub(clubId, { userId: user.id });
+  }
+
   async addMemberToClubV2(
     clubId: string,
-    options: {
-      memberName: string;
-      memberEmail: string;
-      userId?: string;
-      addedByOwner?: boolean;
-      toastmasterId: string;
-    },
+    options: { userId: string; addedByOwner?: boolean },
   ): Promise<ClubMember> {
-    const { memberName, memberEmail, userId, addedByOwner = false, toastmasterId } = options;
+    const { userId, addedByOwner = false } = options;
 
     const club = await this.clubRepo.findOne({ where: { id: clubId } });
     if (!club) throw new NotFoundException('Club not found');
 
-    let finalName = memberName;
-    let finalEmail = memberEmail;
-    let finalUserId = userId || null;
-
-    if (userId) {
-      const user = await this.userService.getUserById(userId);
-      finalName = user.fullName;
-      finalEmail = user.email;
-      finalUserId = user.id;
-    } else if (finalEmail) {
-      const user = await this.userService.findOrCreateByEmail(
-        finalName ?? finalEmail,
-        finalEmail,
-      );
-      finalName = user.fullName;
-      finalEmail = user.email;
-      finalUserId = user.id;
-    }
-
     const existing = await this.memberRepo.findOne({
-      where: [
-        ...(finalUserId ? [{ clubId, userId: finalUserId }] : []),
-        { clubId, memberEmail: finalEmail },
-      ],
+      where: { clubId, userId },
     });
 
     if (existing) {
@@ -195,37 +174,19 @@ export class ClubMemberService {
       throw new BadRequestException('Member already exists in this club');
     }
 
-    const isOwner = club.ownerId === finalUserId;
+    const isOwner = club.ownerId === userId;
 
     const newMember = this.memberRepo.create({
       clubId,
-      memberName: finalName,
-      memberEmail: finalEmail,
-      userId: finalUserId,
+      userId,
       role: isOwner ? ClubRole.OWNER : ClubRole.MEMBER,
       status:
         addedByOwner || isOwner
           ? MembershipStatus.ACTIVE
           : MembershipStatus.PENDING,
-      toastmasterId: toastmasterId ?? null,
     });
 
     return await this.memberRepo.save(newMember);
-  }
-
-  async updateToastmasterId(
-    memberId: string,
-    clubId: string,
-    toastmasterId: string | null,
-  ): Promise<{ message: string }> {
-    const member = await this.memberRepo.findOne({
-      where: { id: memberId, clubId },
-    });
-    if (!member) throw new NotFoundException('Member not found');
-
-    member.toastmasterId = toastmasterId;
-    await this.memberRepo.save(member);
-    return { message: 'Toastmasters ID updated successfully' };
   }
 
   async removeMemberFromClub(
@@ -265,7 +226,6 @@ export class ClubMemberService {
   async joinClubByCodeV2(
     clubCode: string,
     userId: string,
-    toastmasterId: string,
   ): Promise<ClubMember> {
     const club = await this.clubRepo.findOne({ where: { clubCode } });
     if (!club) throw new NotFoundException('Club not found with this code');
@@ -290,13 +250,8 @@ export class ClubMemberService {
       }
     }
 
-    const user = await this.userService.getUserById(userId);
-
     return await this.addMemberToClubV2(club.id, {
       userId,
-      memberName: user.fullName,
-      memberEmail: user.email,
-      toastmasterId,
       addedByOwner: false,
     });
   }
@@ -309,6 +264,7 @@ export class ClubMemberService {
       .leftJoinAndSelect('club.members', 'member', 'member.status = :status', {
         status: 'pending',
       })
+      .leftJoinAndSelect('member.user', 'memberUser')
       .leftJoin(
         'club.members',
         'adminMember',
@@ -330,8 +286,8 @@ export class ClubMemberService {
         description: club.description,
         members: club.members.map((m) => ({
           id: m.id,
-          memberName: m.memberName,
-          memberEmail: m.memberEmail,
+          memberName: m.user?.fullName ?? '',
+          memberEmail: m.user?.email ?? '',
           dateJoined: m.dateJoined,
           status: m.status,
           role: m.role,

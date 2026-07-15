@@ -107,12 +107,12 @@ export class AgendaService {
     const agendas = await this.agendaRepo.find({
       where: { meetingId },
       order: { sequence: 'ASC' },
-      relations: ['member'],
+      relations: ['member', 'member.user'],
     });
-    // For club-member assignments, always use the current name from club_member table
+    // For club-member assignments, always use the current name from the User table
     return agendas.map((agenda) => {
-      if (!agenda.isGuest && agenda.member) {
-        agenda.memberName = agenda.member.memberName;
+      if (!agenda.isGuest && agenda.member?.user) {
+        agenda.memberName = agenda.member.user.fullName;
       }
       return agenda;
     });
@@ -177,15 +177,13 @@ export class AgendaService {
       .createQueryBuilder('agenda')
       .innerJoin('agenda.meeting', 'meeting')
       .leftJoin('club_member', 'member', 'member.id = agenda.member_id')
+      .leftJoin('users', 'u', 'u.id = member.user_id')
       .select('agenda.roleName', 'role')
-      .addSelect(
-        "COALESCE(member.member_name, agenda.member_name)",
-        'memberName',
-      )
+      .addSelect("COALESCE(u.full_name, agenda.member_name)", 'memberName')
       .addSelect('COUNT(agenda.roleName)', 'count')
       .where('meeting.clubId = :clubId', { clubId })
       .groupBy('agenda.roleName')
-      .addGroupBy("COALESCE(member.member_name, agenda.member_name)")
+      .addGroupBy("COALESCE(u.full_name, agenda.member_name)")
       .getRawMany();
 
     return roleCounts.map((item) => ({

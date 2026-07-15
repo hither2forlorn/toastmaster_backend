@@ -66,15 +66,6 @@ const randInt = (min: number, max: number) =>
 const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const fullName = () => `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`;
 
-const tmCounterByClub = new Map<string, number>();
-const nextToastmasterId = (clubCode: string): string => {
-  const prefix = clubCode.split('-')[0].slice(0, 2).toUpperCase();
-  const current = tmCounterByClub.get(clubCode) ?? 10000000;
-  const next = current + 1;
-  tmCounterByClub.set(clubCode, next);
-  return `${prefix}-${next}`;
-};
-
 function pickN<T>(arr: T[], n: number): T[] {
   const copy = [...arr];
   const result: T[] = [];
@@ -257,83 +248,59 @@ export class SeederService {
         id: '11111111-1111-1111-1111-111111111111',
         userId: userOne.id,
         clubId: clubKathmandu.id,
-        memberName: 'one andonly',
-        memberEmail: 'one@sk.com',
         role: ClubRole.OWNER,
         status: MembershipStatus.ACTIVE,
-        toastmasterId: nextToastmasterId(clubKathmandu.clubCode),
       },
       {
         id: '22222222-2222-2222-2222-222222222222',
         userId: userTwo.id,
         clubId: clubKathmandu.id,
-        memberName: 'two andonly',
-        memberEmail: 'two@sk.com',
         role: ClubRole.MEMBER,
         status: MembershipStatus.ACTIVE,
-        toastmasterId: nextToastmasterId(clubKathmandu.clubCode),
       },
       {
         id: '33333333-3333-3333-3333-333333333333',
         userId: generatedUsers[0].id,
         clubId: clubKathmandu.id,
-        memberName: generatedUsers[0].fullName,
-        memberEmail: generatedUsers[0].email,
         role: ClubRole.MEMBER,
         status: MembershipStatus.ACTIVE,
-        toastmasterId: nextToastmasterId(clubKathmandu.clubCode),
       },
       // Patan members
       {
         id: '44444444-4444-4444-4444-444444444444',
         userId: userOne.id,
         clubId: clubPatan.id,
-        memberName: 'one andonly',
-        memberEmail: 'one@sk.com',
         role: ClubRole.OWNER,
         status: MembershipStatus.ACTIVE,
-        toastmasterId: nextToastmasterId(clubPatan.clubCode),
       },
       {
         id: '55555555-5555-5555-5555-555555555555',
         userId: generatedUsers[1].id,
         clubId: clubPatan.id,
-        memberName: generatedUsers[1].fullName,
-        memberEmail: generatedUsers[1].email,
         role: ClubRole.MEMBER,
         status: MembershipStatus.ACTIVE,
-        toastmasterId: nextToastmasterId(clubPatan.clubCode),
       },
       // Bhaktapur members
       {
         id: '66666666-6666-6666-6666-666666666666',
         userId: userTwo.id,
         clubId: clubBhaktapur.id,
-        memberName: 'two andonly',
-        memberEmail: 'two@sk.com',
         role: ClubRole.OWNER,
         status: MembershipStatus.ACTIVE,
-        toastmasterId: nextToastmasterId(clubBhaktapur.clubCode),
       },
       {
         id: '77777777-7777-7777-7777-777777777777',
         userId: userOne.id,
         clubId: clubBhaktapur.id,
-        memberName: 'one andonly',
-        memberEmail: 'one@sk.com',
         role: ClubRole.MEMBER,
         status: MembershipStatus.ACTIVE,
-        toastmasterId: nextToastmasterId(clubBhaktapur.clubCode),
       },
       {
         id: '88888888-8888-8888-8888-888888888888',
         userId: generatedUsers[2].id,
         clubId: clubBhaktapur.id,
-        memberName: generatedUsers[2].fullName,
-        memberEmail: generatedUsers[2].email,
         role: ClubRole.MEMBER,
         status: MembershipStatus.ACTIVE,
-        toastmasterId: nextToastmasterId(clubBhaktapur.clubCode),
       },
     ];
 
@@ -354,11 +321,8 @@ export class SeederService {
           id: randomUUID(),
           userId: ownerUser.id,
           clubId: club.id,
-          memberName: ownerUser.fullName,
-          memberEmail: ownerUser.email,
           role: ClubRole.OWNER,
           status: MembershipStatus.ACTIVE,
-          toastmasterId: nextToastmasterId(club.clubCode),
         });
       }
 
@@ -380,9 +344,6 @@ export class SeederService {
           id: randomUUID(),
           userId: u.id,
           clubId: club.id,
-          memberName: u.fullName,
-          memberEmail: u.email,
-          toastmasterId: nextToastmasterId(club.clubCode),
           role: ClubRole.MEMBER,
           status: pick([
             MembershipStatus.ACTIVE,
@@ -515,6 +476,8 @@ export class SeederService {
       },
     ];
 
+    const userIdToName = new Map(allUsers.map((u) => [u.id, u.fullName]));
+
     const generatedAgendas: { agenda: any; clubId: string }[] = [];
     for (const { meeting, clubId } of completedMeetings) {
       const agendaCount = randInt(5, 9);
@@ -530,8 +493,8 @@ export class SeederService {
           sequence: k + 1,
           meetingId: meeting.id,
           memberId: member.id,
-          memberName: member.memberName,
-          isGuest: !member.userId,
+          memberName: userIdToName.get(member.userId) ?? '',
+          isGuest: false,
           notes: `Performed the role of ${roleName} with ${pick(['great', 'good', 'excellent', 'satisfactory'])} results`,
         };
         agendas.push(agenda);
@@ -602,7 +565,7 @@ export class SeederService {
       if (agenda.roleName === 'Grammarian') {
         const evals = pickN(clubMembers, randInt(2, 4)).map((m: any) => ({
           memberId: m.userId ?? null,
-          memberName: m.memberName,
+          memberName: userIdToName.get(m.userId) ?? '',
           wordUsageCount: randInt(0, 6),
           examples: [
             `used the word of the day naturally in a story`,
@@ -624,7 +587,7 @@ export class SeederService {
       } else if (agenda.roleName === 'Ah Counter') {
         const counts = pickN(clubMembers, randInt(2, 4)).map((m: any) => ({
           memberId: m.userId ?? null,
-          memberName: m.memberName,
+          memberName: userIdToName.get(m.userId) ?? '',
           ahs: randInt(0, 9),
           ums: randInt(0, 7),
           likes: randInt(0, 4),

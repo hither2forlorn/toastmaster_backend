@@ -8,63 +8,21 @@ export class JoinClubByCodeDto {
   })
   @IsString()
   clubCode: string;
-
-  @ApiProperty({
-    example: 'PN-67598269',
-    description: 'Toastmasters International member ID',
-  })
-  @IsString()
-  @Matches(/^[A-Z]{2}-\d+$/, {
-    message: 'Invalid Toastmasters ID format (e.g. PN-67598269)',
-  })
-  toastmasterId: string;
 }
 
 export class AddToClubDto {
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: 'John Doe',
-    description: 'Name of the club member to be added',
+    description: 'Name of the member to add to the club',
   })
-  @IsOptional()
   @IsString()
   memberName: string;
 
-  @ApiPropertyOptional({
-    example: 'john@yopmail',
+  @ApiProperty({
+    example: 'john@example.com',
+    description:
+      'Email of the member to add; an existing user is reused, otherwise a new user is created',
   })
-  @IsOptional()
   @IsEmail()
   memberEmail: string;
-
-  @ApiPropertyOptional({
-    example: 'user-uuid-1234',
-    description: 'The user ID if the member is a registered user',
-  })
-  @IsOptional()
-  @IsString()
-  userId: string;
-
-  @ApiPropertyOptional({
-    example: 'PN-67598269',
-    description: 'Toastmasters International member ID',
-  })
-  @IsOptional()
-  @IsString()
-  @Matches(/^[A-Z]{2}-\d+$/, {
-    message: 'Invalid Toastmasters ID format (e.g. PN-67598269)',
-  })
-  toastmasterId?: string;
-}
-
-export class UpdateToastmasterIdDto {
-  @ApiPropertyOptional({
-    example: 'PN-67598269',
-    description: 'Toastmasters International member ID',
-  })
-  @IsOptional()
-  @IsString()
-  @Matches(/^[A-Z]{2}-\d+$/, {
-    message: 'Invalid Toastmasters ID format (e.g. PN-67598269)',
-  })
-  toastmasterId: string | null;
 }
