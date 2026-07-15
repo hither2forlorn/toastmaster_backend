@@ -34,8 +34,8 @@ export class ClubMemberService {
         'member.dateJoined',
         'member.status',
         'member.role',
-        'user.fullName AS memberName',
-        'user.email AS memberEmail',
+        'user.fullName AS "memberName"',
+        'user.email AS "memberEmail"',
       ])
       .where('member.clubId = :clubId', { clubId })
       .andWhere('member.status = :status', { status: MembershipStatus.PENDING })
@@ -43,11 +43,11 @@ export class ClubMemberService {
 
     return members.map((m) => ({
       id: m.member_id,
-      clubId: m.member_clubId,
-      userId: m.member_userId,
+      clubId: m.member_club_id,
+      userId: m.member_user_id,
       memberName: m.memberName,
       memberEmail: m.memberEmail,
-      dateJoined: m.member_dateJoined,
+      dateJoined: m.member_date_joined,
       status: m.member_status,
       role: m.member_role,
     }));
@@ -64,8 +64,8 @@ export class ClubMemberService {
         'member.dateJoined',
         'member.role',
         'member.status',
-        'user.fullName AS memberName',
-        'user.email AS memberEmail',
+        'user.fullName AS "memberName"',
+        'user.email AS "memberEmail"',
         'user.introduction',
         'CASE WHEN member.userId IS NOT NULL THEN true ELSE false END AS "isRegisteredUser"',
       ])
