@@ -8,8 +8,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { UserService } from '../user/user.service';
-import { ClubRole } from './enum/club-role.enum';
 import { MembershipStatus } from './enum/club-members.enum';
+import { ClubRole } from './enum/club-role.enum';
+import { RoleKey } from 'src/modules/role/enum/role-key.enum';
+import { Role } from 'src/modules/role/entities/role.entity';
 import { ClubWithPendingMembersDto } from './dtos/pending-member.dto';
 import { PendingRequestDecisionDto } from './dtos/pending-request-decision.dto';
 
@@ -20,20 +22,31 @@ export class ClubMemberService {
     private readonly memberRepo: Repository<ClubMember>,
     @InjectRepository(Club)
     private readonly clubRepo: Repository<Club>,
+    @InjectRepository(Role)
+    private readonly roleRepo: Repository<Role>,
     private readonly userService: UserService,
   ) {}
+
+  private async getRoleByKey(key: RoleKey): Promise<Role> {
+    const role = await this.roleRepo.findOne({ where: { key } });
+    if (!role) throw new BadRequestException(`Role ${key} not found`);
+    return role;
+  }
 
   async getPendingMembersForClub(clubId: string): Promise<any[]> {
     const members = await this.memberRepo
       .createQueryBuilder('member')
       .leftJoin('member.user', 'user')
+      .leftJoin('member.role', 'role')
       .select([
         'member.id',
         'member.clubId',
         'member.userId',
         'member.dateJoined',
         'member.status',
-        'member.role',
+        'member.role_id AS "roleId"',
+        'role.key AS "role"',
+        'role.type AS "roleName"',
         'user.fullName AS "memberName"',
         'user.email AS "memberEmail"',
       ])
@@ -42,28 +55,36 @@ export class ClubMemberService {
       .getRawMany();
 
     return members.map((m) => ({
-      id: m.member_id,
+      member_id: m.member_id,
       clubId: m.member_club_id,
       userId: m.member_user_id,
       memberName: m.memberName,
       memberEmail: m.memberEmail,
+      member_date_joined: m.member_date_joined,
       dateJoined: m.member_date_joined,
       status: m.member_status,
-      role: m.member_role,
+      member_role: m.roleName,
+      role: m.role,
+      roleName: m.roleName,
+      roleId: m.roleId,
+      isPending: m.member_status === 'pending',
     }));
   }
 
-  async getClubMembers(clubId: string): Promise<ClubMember[]> {
+  async getClubMembers(clubId: string): Promise<any[]> {
     const members = await this.memberRepo
       .createQueryBuilder('member')
       .leftJoin('member.user', 'user')
+      .leftJoin('member.role', 'role')
       .select([
         'member.id',
         'member.clubId',
         'member.userId',
         'member.dateJoined',
-        'member.role',
         'member.status',
+        'member.role_id AS "roleId"',
+        'role.key AS "role"',
+        'role.type AS "roleName"',
         'user.fullName AS "memberName"',
         'user.email AS "memberEmail"',
         'user.introduction',
@@ -78,7 +99,23 @@ export class ClubMemberService {
       throw new NotFoundException('No members found for this club');
     }
 
-    return members;
+    return members.map((m) => ({
+      member_id: m.member_id,
+      clubId: m.member_club_id,
+      userId: m.member_user_id,
+      memberName: m.memberName,
+      memberEmail: m.memberEmail,
+      member_date_joined: m.member_date_joined,
+      dateJoined: m.member_date_joined,
+      status: m.member_status,
+      member_role: m.roleName,
+      role: m.role,
+      roleName: m.roleName,
+      roleId: m.roleId,
+      user_introduction: m.user_introduction,
+      isRegisteredUser: m.isRegisteredUser,
+      isPending: m.member_status === 'pending',
+    }));
   }
 
   async getMemberById(memberId: string): Promise<ClubMember> {
@@ -125,10 +162,15 @@ export class ClubMemberService {
     if (existing)
       throw new BadRequestException('Member already exists in this club');
 
+    const isOwner = club.ownerId === userId;
+    const role = await this.getRoleByKey(
+      isOwner ? RoleKey.PRESIDENT : RoleKey.MEMBER,
+    );
+
     const newMember = this.memberRepo.create({
       clubId,
       userId,
-      role: club.ownerId === userId ? ClubRole.OWNER : ClubRole.MEMBER,
+      role,
       status: MembershipStatus.ACTIVE,
     });
 
@@ -176,10 +218,14 @@ export class ClubMemberService {
 
     const isOwner = club.ownerId === userId;
 
+    const role = await this.getRoleByKey(
+      isOwner ? RoleKey.PRESIDENT : RoleKey.MEMBER,
+    );
+
     const newMember = this.memberRepo.create({
       clubId,
       userId,
-      role: isOwner ? ClubRole.OWNER : ClubRole.MEMBER,
+      role,
       status:
         addedByOwner || isOwner
           ? MembershipStatus.ACTIVE
@@ -259,24 +305,33 @@ export class ClubMemberService {
   async getPendingRequestToJoinClubByCode(
     userId: string,
   ): Promise<ClubWithPendingMembersDto[]> {
+    const clubIds = await this.memberRepo
+      .createQueryBuilder('member')
+      .select('DISTINCT member.clubId', 'clubId')
+      .leftJoin('member.role', 'role')
+      .where('member.userId = :userId', { userId })
+      .andWhere('member.status = :activeStatus', {
+        activeStatus: MembershipStatus.ACTIVE,
+      })
+      .andWhere(
+        '(member.clubId IN (SELECT id FROM clubs WHERE owner_id = :userId) OR role.is_admin = true)',
+        { userId },
+      )
+      .getRawMany<{ clubId: string }>()
+      .then((rows) => rows.map((r) => r.clubId));
+
+    if (clubIds.length === 0) {
+      return [];
+    }
+
     const clubs = await this.clubRepo
       .createQueryBuilder('club')
       .leftJoinAndSelect('club.members', 'member', 'member.status = :status', {
         status: 'pending',
       })
       .leftJoinAndSelect('member.user', 'memberUser')
-      .leftJoin(
-        'club.members',
-        'adminMember',
-        'adminMember.userId = :userId AND adminMember.role = :adminRole AND adminMember.status = :activeStatus',
-        { userId, adminRole: ClubRole.ADMIN, activeStatus: MembershipStatus.ACTIVE },
-      )
-      .where('club.ownerId = :userId OR adminMember.id IS NOT NULL', { userId })
+      .where('club.id IN (:...clubIds)', { clubIds })
       .getMany();
-
-    if (!clubs || clubs.length === 0) {
-      return [];
-    }
 
     return clubs
       .filter((club) => club.members.length > 0)
@@ -290,7 +345,8 @@ export class ClubMemberService {
           memberEmail: m.user?.email ?? '',
           dateJoined: m.dateJoined,
           status: m.status,
-          role: m.role,
+          role: m.role?.key ?? null,
+          roleName: m.role?.type ?? null,
         })),
       }));
   }
@@ -298,24 +354,43 @@ export class ClubMemberService {
   async getMemberRole(
     clubId: string,
     userId: string,
-  ): Promise<{ member: boolean; role: ClubRole | null }> {
-    const member = await this.memberRepo.find({
-      where: {
-        clubId,
-        userId,
-        status: MembershipStatus.ACTIVE,
-      },
-      select: ['role'],
-    });
+  ): Promise<{
+    member: boolean;
+    role: ClubRole | null;
+    roleKey: string | null;
+    roleName: string | null;
+  }> {
+    const club = await this.clubRepo.findOne({ where: { id: clubId } });
+    const isOwner = !!club && club.ownerId === userId;
 
-    if (member.length > 0) {
-      return { member: true, role: member[0].role };
+    const member = await this.memberRepo
+      .createQueryBuilder('member')
+      .leftJoin('member.role', 'role')
+      .select(['member.id', 'role.key', 'role.type', 'role.isAdmin'])
+      .where('member.clubId = :clubId', { clubId })
+      .andWhere('member.userId = :userId', { userId })
+      .andWhere('member.status = :status', { status: MembershipStatus.ACTIVE })
+      .getOne();
+
+    if (!member && !isOwner) {
+      return { member: false, role: null, roleKey: null, roleName: null };
     }
 
-    return { member: false, role: null };
+    const clubRole = isOwner
+      ? ClubRole.OWNER
+      : member?.role?.isAdmin
+        ? ClubRole.ADMIN
+        : ClubRole.MEMBER;
+
+    return {
+      member: true,
+      role: clubRole,
+      roleKey: member?.role?.key ?? null,
+      roleName: member?.role?.type ?? null,
+    };
   }
 
-  async updateRole(memberId: string, newRole: ClubRole, clubId: string) {
+  async updateRole(memberId: string, newRoleKey: string, clubId: string) {
     const member = await this.memberRepo.findOne({
       where: {
         id: memberId,
@@ -325,7 +400,10 @@ export class ClubMemberService {
     });
     if (!member) throw new NotFoundException('Member not found');
 
-    member.role = newRole;
+    const role = await this.roleRepo.findOne({ where: { key: newRoleKey } });
+    if (!role) throw new BadRequestException('Invalid role');
+
+    member.role = role;
     await this.memberRepo.save(member);
     return { message: 'Member role updated successfully' };
   }
@@ -383,14 +461,14 @@ export class ClubMemberService {
     }
 
     const isOwner = member.club.ownerId === userId;
-    const isAdmin = await this.memberRepo.findOne({
-      where: {
-        clubId: member.clubId,
-        userId,
-        role: ClubRole.ADMIN,
-        status: MembershipStatus.ACTIVE,
-      },
-    });
+    const isAdmin = await this.memberRepo
+      .createQueryBuilder('member')
+      .leftJoin('member.role', 'role')
+      .where('member.clubId = :clubId', { clubId: member.clubId })
+      .andWhere('member.userId = :userId', { userId })
+      .andWhere('member.status = :status', { status: MembershipStatus.ACTIVE })
+      .andWhere('role.is_admin = true')
+      .getExists();
 
     if (!isOwner && !isAdmin) {
       throw new BadRequestException(

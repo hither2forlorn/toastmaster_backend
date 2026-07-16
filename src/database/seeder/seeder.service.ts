@@ -8,8 +8,9 @@ import { ClubMember } from 'src/modules/club/entities/club-member.entity';
 import { Meeting } from 'src/modules/meeting/entities/meeting.entity';
 import { Agenda } from 'src/modules/agenda/entities/agenda.entity';
 import { AgendaReport, ReportType } from 'src/modules/agenda-report/entities/agenda-report.entity';
-import { ClubRole } from 'src/modules/club/enum/club-role.enum';
 import { ClubMeetingFrequency } from 'src/modules/club/enum/club-meeting-frequency.enum';
+import { Role } from 'src/modules/role/entities/role.entity';
+import { RoleKey } from 'src/modules/role/enum/role-key.enum';
 import { MEETING_STATUS } from 'src/modules/meeting/enum/meeting-status.enum';
 import { MembershipStatus } from 'src/modules/club/enum/club-members.enum';
 
@@ -84,6 +85,8 @@ export class SeederService {
     private clubRepository: Repository<Club>,
     @InjectRepository(ClubMember)
     private clubMemberRepository: Repository<ClubMember>,
+    @InjectRepository(Role)
+    private roleRepository: Repository<Role>,
     @InjectRepository(Meeting)
     private meetingRepository: Repository<Meeting>,
     @InjectRepository(Agenda)
@@ -241,6 +244,44 @@ export class SeederService {
     await this.clubRepository.save(allClubs);
     console.log(`✅ Clubs created (${allClubs.length})`);
 
+    const allRoles = await this.roleRepository.find();
+    const roleByKey = new Map(allRoles.map((r) => [r.key, r.id]));
+    const roleById = new Map(allRoles.map((r) => [r.id, r]));
+    const getRole = (key: RoleKey): Role => {
+      const id = roleByKey.get(key);
+      const role = id ? roleById.get(id) : undefined;
+      if (!role) {
+        throw new Error(`Role "${key}" not found in roles table`);
+      }
+      return role;
+    };
+    console.log(
+      `ℹ️  Roles loaded: ${allRoles.length} [${allRoles.map((r) => r.key).join(', ')}]`,
+    );
+    for (const key of Object.values(RoleKey)) {
+      if (!roleByKey.get(key)) {
+        throw new Error(
+          `Seed prerequisite missing: role "${key}" not found in roles table. Run migrations first.`,
+        );
+      }
+    }
+
+    // Officer roles (excluding PRESIDENT which is reserved for the owner, and
+    // MEMBER which is the default). Used to give each club a realistic spread
+    // of the committee roles so all 12 roles are represented in the data.
+    const OFFICER_ROLE_KEYS: RoleKey[] = [
+      RoleKey.IMMEDIATE_PAST_PRESIDENT,
+      RoleKey.VP_EDUCATION,
+      RoleKey.ASSOCIATE_VPE,
+      RoleKey.VP_MEMBERSHIP,
+      RoleKey.ASSOCIATE_VPM,
+      RoleKey.VP_PUBLIC_RELATIONS,
+      RoleKey.ASSOCIATE_VPPR,
+      RoleKey.SECRETARY,
+      RoleKey.TREASURER,
+      RoleKey.SERGEANT_AT_ARMS,
+    ];
+
     // 3. Create Club Members (original + generated)
     const members = [
       // Kathmandu members
@@ -248,21 +289,21 @@ export class SeederService {
         id: '11111111-1111-1111-1111-111111111111',
         userId: userOne.id,
         clubId: clubKathmandu.id,
-        role: ClubRole.OWNER,
+        role: getRole(RoleKey.PRESIDENT),
         status: MembershipStatus.ACTIVE,
       },
       {
         id: '22222222-2222-2222-2222-222222222222',
         userId: userTwo.id,
         clubId: clubKathmandu.id,
-        role: ClubRole.MEMBER,
+        role: getRole(RoleKey.MEMBER),
         status: MembershipStatus.ACTIVE,
       },
       {
         id: '33333333-3333-3333-3333-333333333333',
         userId: generatedUsers[0].id,
         clubId: clubKathmandu.id,
-        role: ClubRole.MEMBER,
+        role: getRole(RoleKey.MEMBER),
         status: MembershipStatus.ACTIVE,
       },
       // Patan members
@@ -270,14 +311,14 @@ export class SeederService {
         id: '44444444-4444-4444-4444-444444444444',
         userId: userOne.id,
         clubId: clubPatan.id,
-        role: ClubRole.OWNER,
+        role: getRole(RoleKey.PRESIDENT),
         status: MembershipStatus.ACTIVE,
       },
       {
         id: '55555555-5555-5555-5555-555555555555',
         userId: generatedUsers[1].id,
         clubId: clubPatan.id,
-        role: ClubRole.MEMBER,
+        role: getRole(RoleKey.MEMBER),
         status: MembershipStatus.ACTIVE,
       },
       // Bhaktapur members
@@ -285,21 +326,21 @@ export class SeederService {
         id: '66666666-6666-6666-6666-666666666666',
         userId: userTwo.id,
         clubId: clubBhaktapur.id,
-        role: ClubRole.OWNER,
+        role: getRole(RoleKey.PRESIDENT),
         status: MembershipStatus.ACTIVE,
       },
       {
         id: '77777777-7777-7777-7777-777777777777',
         userId: userOne.id,
         clubId: clubBhaktapur.id,
-        role: ClubRole.MEMBER,
+        role: getRole(RoleKey.MEMBER),
         status: MembershipStatus.ACTIVE,
       },
       {
         id: '88888888-8888-8888-8888-888888888888',
         userId: generatedUsers[2].id,
         clubId: clubBhaktapur.id,
-        role: ClubRole.MEMBER,
+        role: getRole(RoleKey.MEMBER),
         status: MembershipStatus.ACTIVE,
       },
     ];
@@ -321,7 +362,7 @@ export class SeederService {
           id: randomUUID(),
           userId: ownerUser.id,
           clubId: club.id,
-          role: ClubRole.OWNER,
+          role: getRole(RoleKey.PRESIDENT),
           status: MembershipStatus.ACTIVE,
         });
       }
@@ -339,19 +380,33 @@ export class SeederService {
         candidateUsers,
         Math.min(guestCount, candidateUsers.length),
       );
+      // Rotate through officer roles so each club has a distinct committee;
+      // each officer role is assigned to at most one active member per club.
+      let officerIdx = 0;
       for (const u of pickedUsers) {
+        const status = pick([
+          MembershipStatus.ACTIVE,
+          MembershipStatus.ACTIVE,
+          MembershipStatus.ACTIVE,
+          MembershipStatus.PENDING,
+          MembershipStatus.REJECTED,
+        ]);
+
+        let roleKey = RoleKey.MEMBER;
+        if (
+          status === MembershipStatus.ACTIVE &&
+          officerIdx < OFFICER_ROLE_KEYS.length
+        ) {
+          roleKey = OFFICER_ROLE_KEYS[officerIdx];
+          officerIdx += 1;
+        }
+
         clubMembers.push({
           id: randomUUID(),
           userId: u.id,
           clubId: club.id,
-          role: ClubRole.MEMBER,
-          status: pick([
-            MembershipStatus.ACTIVE,
-            MembershipStatus.ACTIVE,
-            MembershipStatus.ACTIVE,
-            MembershipStatus.PENDING,
-            MembershipStatus.REJECTED,
-          ]),
+          role: getRole(roleKey),
+          status,
         });
       }
       membersByClub.set(club.id, clubMembers);
@@ -445,8 +500,8 @@ export class SeederService {
         duration: 5,
         sequence: 1,
         meetingId: '00000003-3333-3333-3333-333333333333',
-        memberId: '11111111-1111-1111-1111-111111111111',
-        memberName: 'one andonly',
+        memberId: userOne.id,
+        memberName: userOne.fullName,
         isGuest: false,
         notes: 'Great energy throughout',
       },
@@ -457,8 +512,8 @@ export class SeederService {
         duration: 3,
         sequence: 2,
         meetingId: '00000003-3333-3333-3333-333333333333',
-        memberId: '22222222-2222-2222-2222-222222222222',
-        memberName: 'two andonly',
+        memberId: userTwo.id,
+        memberName: userTwo.fullName,
         isGuest: false,
         notes: 'Word of the day: Resilience',
       },
@@ -469,7 +524,7 @@ export class SeederService {
         duration: 2,
         sequence: 3,
         meetingId: '00000003-3333-3333-3333-333333333333',
-        memberId: '33333333-3333-3333-3333-333333333333',
+        memberId: generatedUsers[0].id,
         memberName: generatedUsers[0].fullName,
         isGuest: false,
         notes: 'Tracked filler words effectively',

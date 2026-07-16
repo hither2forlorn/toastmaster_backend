@@ -7,6 +7,7 @@ import { ClubMember } from 'src/modules/club/entities/club-member.entity';
 import { Meeting } from 'src/modules/meeting/entities/meeting.entity';
 import { Agenda } from 'src/modules/agenda/entities/agenda.entity';
 import { AgendaReport } from 'src/modules/agenda-report/entities/agenda-report.entity';
+import { Role } from 'src/modules/role/entities/role.entity';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { AgendaReport } from 'src/modules/agenda-report/entities/agenda-report.e
       Meeting,
       Agenda,
       AgendaReport,
+      Role,
     ]),
   ],
   providers: [SeederService],

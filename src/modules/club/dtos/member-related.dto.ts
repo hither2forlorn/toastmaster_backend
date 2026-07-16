@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsString } from 'class-validator';
-import { ClubRole } from '../enum/club-role.enum';
+import { RoleKey } from 'src/modules/role/enum/role-key.enum';
 
 export class GetMemberRoleDto {
   @ApiProperty({ example: 'club-123' })
@@ -22,11 +22,11 @@ export class UpdateMemberRoleDto {
   clubId: string;
 
   @ApiProperty({
-    example: ClubRole.ADMIN,
-    description: 'New role to assign to the member',
-    enum: ClubRole,
+    example: RoleKey.VP_EDUCATION,
+    description: 'New role key to assign to the member',
+    enum: RoleKey,
   })
   @IsString()
-  @IsEnum(ClubRole)
-  newRole: ClubRole;
+  @IsEnum(RoleKey)
+  newRole: RoleKey;
 }

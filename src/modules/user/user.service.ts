@@ -55,6 +55,7 @@ export class UserService {
         { status: MembershipStatus.ACTIVE },
       )
       .leftJoin('membership.club', 'club')
+      .leftJoin('membership.role', 'role')
       .leftJoin('user.ownedClubs', 'ownedClub')
       .select([
         'user.id',
@@ -63,23 +64,23 @@ export class UserService {
         'user.introduction',
         `COALESCE(
           JSONB_AGG(
-            DISTINCT CASE WHEN "membership"."role" = 'MEMBER' AND "club"."id" IS NOT NULL
+            DISTINCT CASE WHEN "club"."id" IS NOT NULL
               THEN JSONB_BUILD_OBJECT(
                 'id', "club"."id",
                 'name', "club"."name"
               )
             END
-          ) FILTER (WHERE "membership"."role" = 'MEMBER' AND "club"."id" IS NOT NULL), '[]'
+          ) FILTER (WHERE "club"."id" IS NOT NULL), '[]'
         ) AS member_of`,
         `COALESCE(
           JSONB_AGG(
-            DISTINCT CASE WHEN "membership"."role" IN ('ADMIN', 'OWNER') AND "club"."id" IS NOT NULL
+            DISTINCT CASE WHEN "club"."id" IS NOT NULL AND ("role"."is_admin" = true OR "club"."owner_id" = "user"."id")
               THEN JSONB_BUILD_OBJECT(
                 'id', "club"."id",
                 'name', "club"."name"
               )
             END
-          ) FILTER (WHERE "membership"."role" IN ('ADMIN', 'OWNER') AND "club"."id" IS NOT NULL), '[]'
+          ) FILTER (WHERE "club"."id" IS NOT NULL AND ("role"."is_admin" = true OR "club"."owner_id" = "user"."id")), '[]'
         ) AS admin_of`,
         `COALESCE(
           JSONB_AGG(

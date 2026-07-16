@@ -2,8 +2,8 @@ import { Column, Entity, JoinColumn, ManyToOne, Unique } from 'typeorm';
 import { Club } from './club.entity';
 import { User } from 'src/modules/user/entities/user.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { ClubRole } from '../enum/club-role.enum';
 import { MembershipStatus } from '../enum/club-members.enum';
+import { Role } from 'src/modules/role/entities/role.entity';
 
 @Entity()
 @Unique(['clubId', 'userId'])
@@ -35,6 +35,7 @@ export class ClubMember extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ default: ClubRole.MEMBER, enum: ClubRole, type: 'enum' })
-  role: ClubRole;
+  @ManyToOne(() => Role, { eager: true, nullable: false })
+  @JoinColumn({ name: 'role_id' })
+  role: Role;
 }

@@ -6,10 +6,15 @@ import { Club } from './entities/club.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClubMemberService } from './club-member.service';
 import { UserModule } from '../user/user.module';
+import { RoleModule } from '../role/role.module';
 import { CodeGeneratorService } from 'src/common/utils/code-generator.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Club, ClubMember]), UserModule],
+  imports: [
+    TypeOrmModule.forFeature([Club, ClubMember]),
+    UserModule,
+    RoleModule,
+  ],
   providers: [ClubService, ClubMemberService, CodeGeneratorService],
   controllers: [ClubController],
   exports: [ClubService, ClubMemberService],

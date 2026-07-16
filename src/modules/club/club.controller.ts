@@ -161,7 +161,7 @@ export class ClubController {
     @Body() { memberId, clubId, newRole }: UpdateMemberRoleDto,
     @Req() req,
   ) {
-    if (req.clubRole !== ClubRole.OWNER) {
+    if (req.clubRole !== ClubRole.OWNER && req.clubRole !== ClubRole.ADMIN) {
       throw new UnauthorizedException(
         'You are not authorized to update member roles in this club',
       );
