@@ -30,14 +30,26 @@ export class UserService {
     return this.userRepo.save(user);
   }
 
-  async findOrCreateByEmail(fullName: string, email: string): Promise<User> {
+  async findOrCreateByEmail(
+    fullName: string,
+    email: string,
+    toastmasterId?: string,
+  ): Promise<User> {
     const existing = await this.userRepo.findOneBy({ email });
-    if (existing) return existing;
+    if (existing) {
+      // Backfill the Toastmasters member ID if it is not already set.
+      if (toastmasterId && !existing.memberId) {
+        existing.memberId = toastmasterId;
+        return this.userRepo.save(existing);
+      }
+      return existing;
+    }
 
     const user = this.userRepo.create({
       fullName,
       email,
       password: 'Password123',
+      memberId: toastmasterId,
     });
     return this.userRepo.save(user);
   }
