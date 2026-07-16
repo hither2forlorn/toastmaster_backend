@@ -18,6 +18,9 @@ export class User extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   introduction?: string;
 
+  @Column({ length: 20, name: 'member_id', nullable: true })
+  memberId?: string;
+
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword() {

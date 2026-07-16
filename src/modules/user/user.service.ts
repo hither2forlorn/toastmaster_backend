@@ -62,6 +62,7 @@ export class UserService {
         'user.email',
         'user.fullName',
         'user.introduction',
+        'user.memberId',
         `COALESCE(
           JSONB_AGG(
             DISTINCT CASE WHEN "club"."id" IS NOT NULL

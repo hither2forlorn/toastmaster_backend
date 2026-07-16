@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString, Length } from 'class-validator';
+import {
+  IsEmail,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+} from 'class-validator';
 
 export class CreateUserDto {
   @ApiProperty({
@@ -24,6 +30,16 @@ export class CreateUserDto {
   @IsString()
   @Length(8, 255)
   password: string;
+
+  @ApiProperty({
+    description: 'Toastmasters Member ID (e.g. PN-67598269)',
+    example: 'PN-67598269',
+  })
+  @IsString()
+  @Matches(/^PN-\d{8}$/, {
+    message: 'Member ID must be in the format PN-########',
+  })
+  memberId: string;
 }
 
 export class UpdateUserDto {
@@ -52,6 +68,17 @@ export class UpdateUserDto {
   @IsString()
   @Length(0, 500)
   introduction?: string;
+
+  @ApiPropertyOptional({
+    description: 'Toastmasters Member ID (e.g. PN-67598269)',
+    example: 'PN-67598269',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^PN-\d{8}$/, {
+    message: 'Member ID must be in the format PN-########',
+  })
+  memberId?: string;
 }
 
 export class ChangePasswordDto {
