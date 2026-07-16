@@ -39,7 +39,7 @@ export class CreateUserDto {
   @Matches(/^PN-\d{8}$/, {
     message: 'Member ID must be in the format PN-########',
   })
-  memberId: string;
+  toastmasterId: string;
 }
 
 export class UpdateUserDto {
@@ -78,7 +78,7 @@ export class UpdateUserDto {
   @Matches(/^PN-\d{8}$/, {
     message: 'Member ID must be in the format PN-########',
   })
-  memberId?: string;
+  toastmasterId?: string;
 }
 
 export class ChangePasswordDto {
