@@ -28,6 +28,12 @@ export class Meeting extends BaseEntity {
   @Column({ type: 'simple-array', nullable: true, name: 'social_links' })
   socialLinks: string[] | null;
 
+  @Column({ type: 'varchar', nullable: true, length: 255, name: 'word_of_the_day' })
+  wordOfTheDay: string | null;
+
+  @Column({ type: 'varchar', nullable: true, length: 255, name: 'idiom_of_the_day' })
+  idiomOfTheDay: string | null;
+
   @Column({
     type: 'enum',
     enum: MEETING_STATUS,

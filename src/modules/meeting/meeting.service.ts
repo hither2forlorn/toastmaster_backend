@@ -249,6 +249,8 @@ export class MeetingService {
           time: meetingData.time,
           venue: meetingData.venue,
           notes: meetingData.notes ?? undefined,
+          wordOfTheDay: meetingData.wordOfTheDay ?? undefined,
+          idiomOfTheDay: meetingData.idiomOfTheDay ?? undefined,
           clubId: meetingData.clubId,
           status: meetingData.status,
           meetingType: meetingData.meetingType,

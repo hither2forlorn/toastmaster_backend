@@ -77,4 +77,22 @@ export class CreateMeetingDto {
   @ArrayMaxSize(3)
   @IsUrl({}, { each: true })
   socialLinks?: string[];
+
+  @ApiProperty({
+    description: 'Word of the day',
+    example: 'Serendipity',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  wordOfTheDay?: string;
+
+  @ApiProperty({
+    description: 'Idiom of the day',
+    example: 'Break the ice',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  idiomOfTheDay?: string;
 }

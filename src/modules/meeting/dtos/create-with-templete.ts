@@ -172,6 +172,24 @@ export class CreateMeetingWithTemplateDto {
   notes: string | null;
 
   @ApiProperty({
+    description: 'Word of the day',
+    example: 'Serendipity',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  wordOfTheDay?: string;
+
+  @ApiProperty({
+    description: 'Idiom of the day',
+    example: 'Break the ice',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  idiomOfTheDay?: string;
+
+  @ApiProperty({
     description: 'Array of agenda items for the meeting',
     type: [AgendaItemDto],
     minItems: 1,
