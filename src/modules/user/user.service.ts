@@ -21,7 +21,12 @@ export class UserService {
       throw new BadRequestException('User with this email already exists');
     }
 
-    const user = this.userRepo.create({ ...data });
+    const user = this.userRepo.create({
+      fullName: data.fullName,
+      email: data.email,
+      password: data.password,
+      memberId: data.toastmasterId,
+    });
     return this.userRepo.save(user);
   }
 
@@ -133,7 +138,16 @@ export class UserService {
       }
     }
 
-    Object.assign(user, data);
+    Object.assign(user, {
+      ...(data.fullName !== undefined ? { fullName: data.fullName } : {}),
+      ...(data.email !== undefined ? { email: data.email } : {}),
+      ...(data.introduction !== undefined
+        ? { introduction: data.introduction }
+        : {}),
+      ...(data.toastmasterId !== undefined
+        ? { memberId: data.toastmasterId }
+        : {}),
+    });
     return this.userRepo.save(user);
   }
 
