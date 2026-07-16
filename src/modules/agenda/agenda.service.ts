@@ -19,12 +19,15 @@ export interface GrammarianAgendaData {
 export class AgendaService {
   constructor(
     @InjectRepository(Agenda) private readonly agendaRepo: Repository<Agenda>,
-    @InjectRepository(Meeting) private readonly meetingRepo: Repository<Meeting>,
+    @InjectRepository(Meeting)
+    private readonly meetingRepo: Repository<Meeting>,
     private readonly memberService: ClubMemberService,
   ) {}
 
   private async assertMeetingNotPast(meetingId: string): Promise<void> {
-    const meeting = await this.meetingRepo.findOne({ where: { id: meetingId } });
+    const meeting = await this.meetingRepo.findOne({
+      where: { id: meetingId },
+    });
     if (!meeting) throw new BadRequestException('Meeting not found');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -173,11 +176,11 @@ export class AgendaService {
       .innerJoin('agenda.meeting', 'meeting')
       .leftJoin('users', 'u', 'u.id = agenda.member_id')
       .select('agenda.roleName', 'role')
-      .addSelect("COALESCE(u.full_name, agenda.member_name)", 'memberName')
+      .addSelect('COALESCE(u.full_name, agenda.member_name)', 'memberName')
       .addSelect('COUNT(agenda.roleName)', 'count')
       .where('meeting.clubId = :clubId', { clubId })
       .groupBy('agenda.roleName')
-      .addGroupBy("COALESCE(u.full_name, agenda.member_name)")
+      .addGroupBy('COALESCE(u.full_name, agenda.member_name)')
       .getRawMany();
 
     return roleCounts.map((item) => ({
@@ -210,10 +213,10 @@ export class AgendaService {
       );
       // Step 2: Apply the new ordering
       for (let i = 0; i < agendaOrder.length; i++) {
-        await manager.query(
-          'UPDATE agendas SET sequence = $1 WHERE id = $2',
-          [i + 1, agendaOrder[i]],
-        );
+        await manager.query('UPDATE agendas SET sequence = $1 WHERE id = $2', [
+          i + 1,
+          agendaOrder[i],
+        ]);
       }
     });
 
