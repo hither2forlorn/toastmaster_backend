@@ -5,9 +5,12 @@ import { Meeting } from '../meeting/entities/meeting.entity';
 import { In, Repository } from 'typeorm';
 import { CreateAgendaDto } from './dtos/create-agenda.dto';
 import { ClubMemberService } from '../club/club-member.service';
-import { ClubService } from '../club/club.service';
 import { MembershipStatus } from '../club/enum/club-members.enum';
+<<<<<<< HEAD
 import { UserService } from '../user/user.service';
+=======
+import { RoleService } from '../role/role.service';
+>>>>>>> main
 
 export interface GrammarianAgendaData {
   agendaId: string;
@@ -23,7 +26,11 @@ export class AgendaService {
     @InjectRepository(Meeting)
     private readonly meetingRepo: Repository<Meeting>,
     private readonly memberService: ClubMemberService,
+<<<<<<< HEAD
     private readonly userService: UserService,
+=======
+    private readonly roleService: RoleService,
+>>>>>>> main
   ) {}
 
   private async assertMeetingNotPast(meetingId: string): Promise<void> {
@@ -84,14 +91,38 @@ export class AgendaService {
     return { isGuest: false };
   }
 
+  // Resolve a roleId (from the roles table) into the agenda's denormalized
+  // roleName. Falls back to the raw provided value when no matching role row
+  // exists, so custom/free-text role names keep working.
+  private async resolveRole(
+    data: Partial<CreateAgendaDto> & { roleId?: string },
+  ): Promise<{ roleId?: string; roleName: string | null }> {
+    if (data.roleId) {
+      const role = await this.roleService.getRoleById(data.roleId);
+      if (role) {
+        return { roleId: role.id, roleName: role.type };
+      }
+      return { roleId: data.roleId, roleName: data.roleName ?? null };
+    }
+    if (data.roleName) {
+      const role = await this.roleService.getAgendaRoleByName(data.roleName);
+      if (role) {
+        return { roleId: role.id, roleName: role.type };
+      }
+    }
+    return { roleId: data.roleId, roleName: data.roleName ?? null };
+  }
+
   async createAgenda(data: CreateAgendaDto, clubId: string): Promise<Agenda> {
     await this.assertMeetingNotPast(data.meetingId);
 
     const memberData = await this.resolveMember(data, clubId);
+    const roleData = await this.resolveRole(data);
 
     const agenda = this.agendaRepo.create({
       ...data,
       ...memberData,
+      ...roleData,
     });
 
     return this.agendaRepo.save(agenda);
@@ -107,7 +138,8 @@ export class AgendaService {
     const created = await Promise.all(
       agendas.map(async (data) => {
         const memberData = await this.resolveMember(data, clubId);
-        return this.agendaRepo.create({ ...data, ...memberData });
+        const roleData = await this.resolveRole(data);
+        return this.agendaRepo.create({ ...data, ...memberData, ...roleData });
       }),
     );
 
@@ -159,7 +191,7 @@ export class AgendaService {
 
   async updateAgenda(
     agendaId: string,
-    data: Partial<CreateAgendaDto>,
+    data: Partial<CreateAgendaDto> & { roleId?: string },
   ): Promise<Agenda> {
     const agenda = await this.getAgendaById(agendaId);
     await this.assertMeetingNotPast(agenda.meetingId);
@@ -170,7 +202,8 @@ export class AgendaService {
       );
     }
 
-    Object.assign(agenda, data);
+    const roleData = await this.resolveRole(data);
+    Object.assign(agenda, data, roleData);
     return this.agendaRepo.save(agenda);
   }
 
@@ -183,13 +216,12 @@ export class AgendaService {
     return { message: 'Agenda deleted successfully' };
   }
 
-  async assignRoleToAgenda(
-    agendaId: string,
-    roleName: string,
-  ): Promise<Agenda> {
+  async assignRoleToAgenda(agendaId: string, roleId: string): Promise<Agenda> {
     const agenda = await this.getAgendaById(agendaId);
+    const roleData = await this.resolveRole({ roleId });
 
-    agenda.roleName = roleName;
+    agenda.roleId = roleData.roleId;
+    agenda.roleName = roleData.roleName;
     return this.agendaRepo.save(agenda);
   }
   async getRoleCounts(clubId: string) {
@@ -248,6 +280,11 @@ export class AgendaService {
   async getAgendaIdByMeetingId(
     meetingId: string,
   ): Promise<GrammarianAgendaData[] | null> {
+    const reportRoleNames = await this.roleService.getAgendaRoleNamesByKeys([
+      'GRAMMARIAN',
+      'AH_COUNTER',
+    ]);
+
     const agenda = await this.agendaRepo
       .createQueryBuilder('a')
       .innerJoin('meetings', 'm', 'm.id = a.meeting_id')
@@ -261,9 +298,7 @@ export class AgendaService {
       .addSelect('cm.user_id', 'userId')
       .addSelect('a.role_name', 'roleName')
       .where('m.id = :meetingId', { meetingId })
-      .andWhere('a.role_name IN (:...roles)', {
-        roles: ['Grammarian', 'Ah Counter'],
-      })
+      .andWhere('a.role_name IN (:...roles)', { roles: reportRoleNames })
       .andWhere('cm.status = :status', { status: MembershipStatus.ACTIVE })
       .getRawMany();
 
@@ -280,10 +315,15 @@ export class AgendaService {
     userId: string,
     meetingId: string,
   ): Promise<Agenda | null> {
+    const reportRoleNames = await this.roleService.getAgendaRoleNamesByKeys([
+      'GRAMMARIAN',
+      'AH_COUNTER',
+    ]);
+
     return await this.agendaRepo.findOne({
       where: {
         meetingId: meetingId,
-        roleName: In(['Grammarian', 'Ah Counter']),
+        roleName: In(reportRoleNames),
         member: {
           id: userId,
         },

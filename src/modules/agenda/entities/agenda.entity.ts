@@ -23,6 +23,9 @@ export class Agenda extends BaseEntity {
   @Column({ name: 'role_name', nullable: true, type: 'varchar' })
   roleName: string | null;
 
+  @Column({ name: 'role_id', nullable: true, type: 'uuid' })
+  roleId?: string;
+
   @Column({ type: 'int' })
   duration: number;
 

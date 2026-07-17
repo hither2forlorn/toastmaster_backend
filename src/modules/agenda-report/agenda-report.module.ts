@@ -9,6 +9,7 @@ import { MeetingModule } from '../meeting/meeting.module';
 import { UserModule } from '../user/user.module';
 import { ClubMemberService } from '../club/club-member.service';
 import { AgendaTemplateModule } from '../agenda-template/agenda-template.module';
+import { RoleModule } from '../role/role.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AgendaTemplateModule } from '../agenda-template/agenda-template.module'
     MeetingModule,
     UserModule,
     AgendaTemplateModule,
+    RoleModule,
   ],
   controllers: [AgendaReportController],
   providers: [AgendaReportService],
