@@ -80,6 +80,7 @@ export class UserService {
         'user.fullName',
         'user.introduction',
         'user.memberId',
+        'user.phone',
         `COALESCE(
           JSONB_AGG(
             DISTINCT CASE WHEN "club"."id" IS NOT NULL
@@ -159,6 +160,7 @@ export class UserService {
       ...(data.toastmasterId !== undefined
         ? { memberId: data.toastmasterId }
         : {}),
+      ...(data.phone !== undefined ? { phone: data.phone } : {}),
     });
     return this.userRepo.save(user);
   }

@@ -79,6 +79,15 @@ export class UpdateUserDto {
     message: 'Invalid Toastmasters member ID format (e.g. PN-67598269)',
   })
   toastmasterId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Contact phone number',
+    example: '+1234567890',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(0, 20)
+  phone?: string;
 }
 
 export class ChangePasswordDto {
