@@ -19,6 +19,7 @@ import {
 } from './dtos/agenda-report.dto';
 import { MeetingService } from '../meeting/meeting.service';
 import { MembershipStatus } from '../club/enum/club-members.enum';
+import { RoleService } from '../role/role.service';
 
 @Injectable()
 export class AgendaReportService {
@@ -28,6 +29,7 @@ export class AgendaReportService {
     // @InjectRepository(AgendaTemplateItem) private readonly agendaTempletItemRepo: Repository<AgendaTemplateItem>,
     private readonly agendaService: AgendaService,
     private readonly meetingService: MeetingService,
+    private readonly roleService: RoleService,
   ) {}
 
   async createAgendaReportGrammarian(
@@ -56,7 +58,10 @@ export class AgendaReportService {
     }
     // console.log('userids :: ', user);
 
-    const roleNames = ['Ah Counter', 'Grammarian'];
+    const roleNames = await this.roleService.getAgendaRoleNamesByKeys([
+      'GRAMMARIAN',
+      'AH_COUNTER',
+    ]);
     // console.log(roleNames);
     // console.log(dto.reportType);
     if (!roleNames.includes(user?.roleName)) {
@@ -339,7 +344,10 @@ export class AgendaReportService {
       );
     }
 
-    const roleType = ['Grammarian', 'Ah Counter'];
+    const roleType = await this.roleService.getAgendaRoleNamesByKeys([
+      'GRAMMARIAN',
+      'AH_COUNTER',
+    ]);
     if (!report.roleName || !roleType.includes(report.roleName)) {
       throw new BadRequestException("Sorry you can't creat this resources");
     }
@@ -350,16 +358,16 @@ export class AgendaReportService {
     }
 
     const isReportExist = await this.agendaReportRepo.findOne({
-        where: {
-          agenda: {
-            meetingId: meetingId,
-            member: {
-              id: userId,
-              isDeleted: false,
-            },
+      where: {
+        agenda: {
+          meetingId: meetingId,
+          member: {
+            id: userId,
             isDeleted: false,
           },
+          isDeleted: false,
         },
+      },
       // relations: ['agenda', 'agenda.member'],
     });
     // return isReportExist;

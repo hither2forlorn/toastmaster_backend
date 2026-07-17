@@ -1,5 +1,4 @@
 import { IsString, IsNumber, IsOptional, IsNotEmpty } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 
 export class CreateAgendaDto {
@@ -26,6 +25,15 @@ export class CreateAgendaDto {
   @IsOptional()
   @IsString()
   roleName?: string;
+
+  @ApiProperty({
+    description: 'The ID of the role from the roles table (optional)',
+    example: 'role-uuid',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  roleId?: string;
 
   @ApiProperty({
     description: 'The duration of the agenda in minutes',
