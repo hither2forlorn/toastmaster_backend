@@ -45,9 +45,9 @@ export class AddCategoryToRoles1784201000000
     // 3. Seed the agenda roles (skip any that already exist by key).
     for (const role of AGENDA_ROLES) {
       await queryRunner.query(
-        `INSERT INTO "roles" ("id", "created_at", "updated_at", "is_deleted", "type", "key", "is_admin", "category")
+         `INSERT INTO "roles" ("id", "created_at", "updated_at", "is_deleted", "type", "key", "is_admin", "category")
          SELECT uuid_generate_v4(), now(), now(), false, $1, $2, false, 'AGENDA'
-         WHERE NOT EXISTS (SELECT 1 FROM "roles" WHERE "key" = $2)`,
+         WHERE NOT EXISTS (SELECT 1 FROM "roles" WHERE "key" = $2::varchar)`,
         [role.name, role.key],
       );
     }
