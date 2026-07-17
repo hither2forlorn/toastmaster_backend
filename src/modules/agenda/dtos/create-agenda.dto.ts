@@ -68,6 +68,16 @@ export class CreateAgendaDto {
   memberName?: string;
 
   @ApiProperty({
+    description:
+      'The Toastmasters member ID (users.member_id) used to look up a member when assigning via the Toastmaster option. If provided, it resolves to the matching user and assigns them to the club.',
+    example: 'PN-67598269',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  toastmasterId?: string;
+
+  @ApiProperty({
     description: 'Additional notes for the agenda (optional)',
     required: false,
     example: 'Please prepare your presentation in advance.',

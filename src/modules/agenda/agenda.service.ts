@@ -7,6 +7,7 @@ import { CreateAgendaDto } from './dtos/create-agenda.dto';
 import { ClubMemberService } from '../club/club-member.service';
 import { ClubService } from '../club/club.service';
 import { MembershipStatus } from '../club/enum/club-members.enum';
+import { UserService } from '../user/user.service';
 
 export interface GrammarianAgendaData {
   agendaId: string;
@@ -22,6 +23,7 @@ export class AgendaService {
     @InjectRepository(Meeting)
     private readonly meetingRepo: Repository<Meeting>,
     private readonly memberService: ClubMemberService,
+    private readonly userService: UserService,
   ) {}
 
   private async assertMeetingNotPast(meetingId: string): Promise<void> {
@@ -40,8 +42,20 @@ export class AgendaService {
 
   // utils function
   private async resolveMember(data: CreateAgendaDto, clubId: string) {
-    if (!data.memberId && !data.memberName) {
+    if (!data.memberId && !data.memberName && !data.toastmasterId) {
       return { isGuest: false };
+    }
+
+    // When assigned via the Toastmaster option, resolve the user from their
+    // Toastmasters member ID and treat them as a regular club member.
+    if (!data.memberId && data.toastmasterId) {
+      const user = await this.userService.findByMemberId(data.toastmasterId);
+      if (!user) {
+        throw new BadRequestException(
+          'No user found with the provided Toastmasters ID',
+        );
+      }
+      data.memberId = user.id;
     }
 
     if (!data.memberId) {
@@ -53,7 +67,15 @@ export class AgendaService {
       data.memberId,
     );
 
-    if (!membership.member) {
+    // The user exists but is not yet a member of this club. Auto-add them to
+    // the club so they can be assigned, then treat them as a club member.
+    if (!membership.member && data.toastmasterId) {
+      await this.memberService.addMemberToClub(clubId, {
+        userId: data.memberId,
+      });
+    }
+
+    if (!membership.member && !data.toastmasterId) {
       throw new BadRequestException(
         'Member does not belong to the specified club',
       );

@@ -67,6 +67,17 @@ class AgendaItemDto {
   memberName?: string | null;
 
   @ApiProperty({
+    description:
+      'Toastmasters member ID (users.member_id) used when assignmentType is "toastmaster" to look up and assign the matching member',
+    example: 'PN-67598269',
+    required: false,
+    nullable: true,
+  })
+  @IsString()
+  @IsOptional()
+  toastmasterId?: string | null;
+
+  @ApiProperty({
     description: 'Sequence order of the agenda item',
     example: 1,
     minimum: 1,
@@ -87,11 +98,11 @@ class AgendaItemDto {
 
   @ApiProperty({
     description: 'Type of assignment',
-    enum: ['member', 'guest'],
+    enum: ['member', 'guest', 'toastmaster'],
     example: 'member',
   })
-  @IsEnum(['member', 'guest'])
-  assignmentType: 'member' | 'guest';
+  @IsEnum(['member', 'guest', 'toastmaster'])
+  assignmentType: 'member' | 'guest' | 'toastmaster';
 }
 
 export class CreateMeetingWithTemplateDto {
