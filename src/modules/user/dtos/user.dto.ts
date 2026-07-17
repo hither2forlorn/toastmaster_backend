@@ -36,8 +36,8 @@ export class CreateUserDto {
     example: 'PN-67598269',
   })
   @IsString()
-  @Matches(/^PN-\d{8}$/, {
-    message: 'Member ID must be in the format PN-########',
+  @Matches(/^[A-Z]{2}-\d+$/, {
+    message: 'Invalid Toastmasters member ID format (e.g. PN-67598269)',
   })
   toastmasterId: string;
 }
@@ -75,8 +75,8 @@ export class UpdateUserDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(/^PN-\d{8}$/, {
-    message: 'Member ID must be in the format PN-########',
+  @Matches(/^[A-Z]{2}-\d+$/, {
+    message: 'Invalid Toastmasters member ID format (e.g. PN-67598269)',
   })
   toastmasterId?: string;
 }
