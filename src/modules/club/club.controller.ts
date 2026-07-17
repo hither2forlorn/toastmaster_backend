@@ -253,6 +253,20 @@ export class ClubController {
     return this.clubMemberService.getMemberById(memberId);
   }
 
+  @Get('/:clubId/members/search/toastmaster')
+  searchMembersByToastmasterId(
+    @Param('clubId') clubId: string,
+    @Query('toastmasterId') toastmasterId: string,
+  ) {
+    if (!toastmasterId) {
+      return [];
+    }
+    return this.clubMemberService.searchClubMembersByToastmasterId(
+      clubId,
+      toastmasterId,
+    );
+  }
+
   @Get('/:clubId')
   getClubInfo(@Param('clubId') clubId: string) {
     return this.clubService.getClubInfo(clubId);

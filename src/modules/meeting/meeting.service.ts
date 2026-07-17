@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -12,6 +13,7 @@ import { MEETING_STATUS } from './enum/meeting-status.enum';
 import { CreateMeetingWithTemplateDto } from './dtos/create-with-templete';
 import { Agenda } from '../agenda/entities/agenda.entity';
 import { UserService } from '../user/user.service';
+import { ClubMemberService } from '../club/club-member.service';
 
 @Injectable()
 export class MeetingService {
@@ -19,6 +21,7 @@ export class MeetingService {
     @InjectRepository(Meeting)
     private readonly meetingRepo: Repository<Meeting>,
     private readonly userService: UserService,
+    private readonly memberService: ClubMemberService,
   ) {}
 
   async createMeeting(data: CreateMeetingDto): Promise<Meeting> {
@@ -240,6 +243,41 @@ export class MeetingService {
 
   async createMeetingUsingTemplet(data: CreateMeetingWithTemplateDto) {
     const { agendas, ...meetingData } = data;
+
+    // Resolve any "toastmaster" assignments to their user IDs up front so the
+    // agenda creation below can treat them like regular club members.
+    const resolvedAgendas = await Promise.all(
+      agendas.map(async (agenda) => {
+        if (agenda.assignmentType === 'toastmaster') {
+          if (!agenda.toastmasterId) {
+            throw new BadRequestException(
+              'Toastmasters ID is required when assignment type is "toastmaster"',
+            );
+          }
+          const user = await this.userService.findByMemberId(
+            agenda.toastmasterId,
+          );
+          if (!user) {
+            throw new BadRequestException(
+              'No user found with the provided Toastmasters ID',
+            );
+          }
+          const membership = await this.memberService.getMemberRole(
+            meetingData.clubId,
+            user.id,
+          );
+          // User exists but is not a member of this club yet: auto-add them.
+          if (!membership.member) {
+            await this.memberService.addMemberToClub(meetingData.clubId, {
+              userId: user.id,
+            });
+          }
+          return { ...agenda, memberId: user.id, toastmasterId: undefined };
+        }
+        return agenda;
+      }),
+    );
+
     return await this.meetingRepo.manager.transaction(
       async (transactionalEntityManager) => {
         const meeting = transactionalEntityManager.create(Meeting, {
@@ -260,7 +298,7 @@ export class MeetingService {
 
         const agendaEntities = transactionalEntityManager.create(
           Agenda,
-          agendas.map((agenda) => ({
+          resolvedAgendas.map((agenda) => ({
             title: agenda.title,
             roleName: agenda.roleName,
             duration: agenda.duration,

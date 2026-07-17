@@ -62,6 +62,10 @@ export class UserService {
     return user;
   }
 
+  async findByMemberId(memberId: string): Promise<User | null> {
+    return this.userRepo.findOneBy({ memberId });
+  }
+
   async getProfile(userId: string) {
     const user = await this.userRepo
       .createQueryBuilder('user')
