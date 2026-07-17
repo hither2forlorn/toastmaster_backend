@@ -181,13 +181,14 @@ export class ClubMemberService {
   // lookup (existing user) or creates a new user when none is found.
   async addMemberToClubByEmail(
     clubId: string,
-    options: { memberName: string; memberEmail: string },
+    options: { memberName: string; memberEmail: string; toastmasterId?: string },
   ): Promise<ClubMember> {
-    const { memberName, memberEmail } = options;
+    const { memberName, memberEmail, toastmasterId } = options;
 
     const user = await this.userService.findOrCreateByEmail(
       memberName,
       memberEmail,
+      toastmasterId,
     );
 
     return this.addMemberToClub(clubId, { userId: user.id });

@@ -25,4 +25,15 @@ export class AddToClubDto {
   })
   @IsEmail()
   memberEmail: string;
+
+  @ApiPropertyOptional({
+    example: 'PN-67598269',
+    description: 'Optional Toastmasters member ID to store on the user',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Z]{2}-\d+$/, {
+    message: 'Invalid Toastmasters member ID format (e.g. PN-67598269)',
+  })
+  toastmasterId?: string;
 }
