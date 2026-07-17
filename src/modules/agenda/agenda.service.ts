@@ -6,11 +6,8 @@ import { In, Repository } from 'typeorm';
 import { CreateAgendaDto } from './dtos/create-agenda.dto';
 import { ClubMemberService } from '../club/club-member.service';
 import { MembershipStatus } from '../club/enum/club-members.enum';
-<<<<<<< HEAD
 import { UserService } from '../user/user.service';
-=======
 import { RoleService } from '../role/role.service';
->>>>>>> main
 
 export interface GrammarianAgendaData {
   agendaId: string;
@@ -26,11 +23,8 @@ export class AgendaService {
     @InjectRepository(Meeting)
     private readonly meetingRepo: Repository<Meeting>,
     private readonly memberService: ClubMemberService,
-<<<<<<< HEAD
     private readonly userService: UserService,
-=======
     private readonly roleService: RoleService,
->>>>>>> main
   ) {}
 
   private async assertMeetingNotPast(meetingId: string): Promise<void> {
