@@ -158,9 +158,9 @@ export class UserService {
         ? { introduction: data.introduction }
         : {}),
       ...(data.toastmasterId !== undefined
-        ? { memberId: data.toastmasterId }
+        ? { memberId: data.toastmasterId ? data.toastmasterId : null }
         : {}),
-      ...(data.phone !== undefined ? { phone: data.phone } : {}),
+      ...(data.phone !== undefined ? { phone: data.phone ? data.phone : null } : {}),
     });
     return this.userRepo.save(user);
   }

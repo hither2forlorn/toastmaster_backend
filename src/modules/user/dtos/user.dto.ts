@@ -75,7 +75,8 @@ export class UpdateUserDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(/^[A-Z]{2}-\d+$/, {
+  @Length(0, 20)
+  @Matches(/^$|^[A-Z]{2}-\d+$/, {
     message: 'Invalid Toastmasters member ID format (e.g. PN-67598269)',
   })
   toastmasterId?: string;
