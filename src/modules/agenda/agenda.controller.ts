@@ -33,8 +33,8 @@ export class AgendaController {
 
   @Post('/create')
   @ApiOperation({ summary: 'Create a new agenda item' })
-  createAgenda(@Body() data: CreateAgendaDto, @Query('clubId') clubId: string) {
-    return this.agendaService.createAgenda(data, clubId);
+  createAgenda(@Body() data: CreateAgendaDto) {
+    return this.agendaService.createAgenda(data, data.clubId);
   }
 
   @Post('/bulk-create')
