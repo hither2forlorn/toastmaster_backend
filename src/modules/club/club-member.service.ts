@@ -482,8 +482,7 @@ export class ClubMemberService {
       await this.memberRepo.save(member);
       return { message: 'Membership request approved' };
     } else if (!pendingRequestDecisionDto.decision) {
-      member.status = MembershipStatus.REJECTED;
-      await this.memberRepo.save(member);
+      await this.memberRepo.delete(member.id);
       return { message: 'Membership request rejected' };
     } else {
       throw new BadRequestException('Invalid decision value');
