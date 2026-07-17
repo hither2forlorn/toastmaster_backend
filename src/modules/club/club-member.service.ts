@@ -352,6 +352,39 @@ export class ClubMemberService {
       }));
   }
 
+  async searchClubMembersByToastmasterId(
+    clubId: string,
+    toastmasterId: string,
+  ): Promise<
+    { memberId: string; userId: string; memberName: string; toastmasterId: string | null }[]
+  > {
+    const members = await this.memberRepo
+      .createQueryBuilder('member')
+      .leftJoin('member.user', 'user')
+      .select([
+        'member.id',
+        'member.userId',
+        'user.fullName AS "memberName"',
+        'user.memberId AS "toastmasterId"',
+      ])
+      .where('member.clubId = :clubId', { clubId })
+      .andWhere('member.status = :status', { status: MembershipStatus.ACTIVE })
+      .andWhere('user.memberId IS NOT NULL')
+      .andWhere('user.memberId ILIKE :toastmasterId', {
+        toastmasterId: `${toastmasterId}%`,
+      })
+      .orderBy('user.memberId', 'ASC')
+      .limit(10)
+      .getRawMany();
+
+    return members.map((m) => ({
+      memberId: m.member_id,
+      userId: m.user_id,
+      memberName: m.memberName,
+      toastmasterId: m.toastmasterId,
+    }));
+  }
+
   async getMemberRole(
     clubId: string,
     userId: string,
