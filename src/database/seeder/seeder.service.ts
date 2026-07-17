@@ -67,6 +67,15 @@ const randInt = (min: number, max: number) =>
 const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const fullName = () => `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`;
 
+// Toastmasters member IDs follow the pattern AA-####### (e.g. PN-67598269).
+// Generated deterministically so each seeded user has a stable, unique ID that
+// the Toastmaster assignment autocomplete / lookup can resolve.
+function toastmasterIdFor(index: number): string {
+  const district = pick(['PN', 'NP', 'KT', 'PT', 'BK', 'TM']);
+  const number = String(10000000 + index).slice(-8);
+  return `${district}-${number}`;
+}
+
 function pickN<T>(arr: T[], n: number): T[] {
   const copy = [...arr];
   const result: T[] = [];
@@ -141,6 +150,7 @@ export class SeederService {
       email: 'one@sk.com',
       password: 'password123',
       fullName: 'one andonly',
+      memberId: toastmasterIdFor(0),
     });
 
     const userTwo = this.userRepository.create({
@@ -148,6 +158,7 @@ export class SeederService {
       email: 'two@sk.com',
       password: 'password123',
       fullName: 'two andonly',
+      memberId: toastmasterIdFor(1),
     });
 
     const generatedUsers: User[] = [];
@@ -159,6 +170,7 @@ export class SeederService {
           email: `user${i + 1}@toastmasters.test`,
           password: 'password123',
           fullName: name,
+          memberId: toastmasterIdFor(i + 2),
           introduction: `Dedicated toastmaster passionate about public speaking and leadership.`,
         }),
       );
