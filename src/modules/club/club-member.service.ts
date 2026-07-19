@@ -8,6 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { UserService } from '../user/user.service';
+import { User } from '../user/entities/user.entity';
 import { MembershipStatus } from './enum/club-members.enum';
 import { ClubRole } from './enum/club-role.enum';
 import { RoleKey } from 'src/modules/role/enum/role-key.enum';
@@ -24,6 +25,8 @@ export class ClubMemberService {
     private readonly clubRepo: Repository<Club>,
     @InjectRepository(Role)
     private readonly roleRepo: Repository<Role>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
     private readonly userService: UserService,
   ) {}
 
@@ -356,20 +359,34 @@ export class ClubMemberService {
     clubId: string,
     toastmasterId: string,
   ): Promise<
-    { memberId: string; userId: string; memberName: string; toastmasterId: string | null }[]
+    {
+      memberId: string | null;
+      userId: string;
+      memberName: string;
+      toastmasterId: string | null;
+      isClubMember: boolean;
+    }[]
   > {
-    const members = await this.memberRepo
-      .createQueryBuilder('member')
-      .leftJoin('member.user', 'user')
+    // Search across the whole platform (all registered users) by their
+    // Toastmasters member ID, not just existing club members. A user that is
+    // not yet a member of this club can still be assigned — the agenda service
+    // will auto-add them. The `isClubMember` flag tells the client whether the
+    // user is already part of the club.
+    const users = await this.userRepo
+      .createQueryBuilder('user')
+      .leftJoin(
+        'club_member',
+        'member',
+        'member.user_id = user.id AND member.club_id = :clubId AND member.status = :status',
+        { clubId, status: MembershipStatus.ACTIVE },
+      )
       .select([
-        'member.id',
-        'member.userId',
+        'user.id AS "userId"',
         'user.fullName AS "memberName"',
         'user.memberId AS "toastmasterId"',
+        'member.id AS "memberId"',
       ])
-      .where('member.clubId = :clubId', { clubId })
-      .andWhere('member.status = :status', { status: MembershipStatus.ACTIVE })
-      .andWhere('user.memberId IS NOT NULL')
+      .where('user.memberId IS NOT NULL')
       .andWhere('user.memberId ILIKE :toastmasterId', {
         toastmasterId: `${toastmasterId}%`,
       })
@@ -377,11 +394,12 @@ export class ClubMemberService {
       .limit(10)
       .getRawMany();
 
-    return members.map((m) => ({
-      memberId: m.member_id,
-      userId: m.user_id,
-      memberName: m.memberName,
-      toastmasterId: m.toastmasterId,
+    return users.map((u) => ({
+      memberId: u.memberId ?? null,
+      userId: u.userId,
+      memberName: u.memberName,
+      toastmasterId: u.toastmasterId,
+      isClubMember: !!u.memberId,
     }));
   }
 
@@ -390,6 +408,7 @@ export class ClubMemberService {
     userId: string,
   ): Promise<{
     member: boolean;
+    isOwner: boolean;
     role: ClubRole | null;
     roleKey: string | null;
     roleName: string | null;
@@ -407,7 +426,13 @@ export class ClubMemberService {
       .getOne();
 
     if (!member && !isOwner) {
-      return { member: false, role: null, roleKey: null, roleName: null };
+      return {
+        member: false,
+        isOwner: false,
+        role: null,
+        roleKey: null,
+        roleName: null,
+      };
     }
 
     const clubRole = isOwner
@@ -418,6 +443,7 @@ export class ClubMemberService {
 
     return {
       member: true,
+      isOwner,
       role: clubRole,
       roleKey: member?.role?.key ?? null,
       roleName: member?.role?.type ?? null,
