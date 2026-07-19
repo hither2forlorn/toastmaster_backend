@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { CreateClubDto } from './dtos/create-club.dto';
 import { UpdateClubDto } from './dtos/update-club-dto';
 import { ClubMemberService } from './club-member.service';
+import { ClubMeetingMode } from './enum/club-meeting-mode.enum';
 import { CodeGeneratorService } from 'src/common/utils/code-generator.service';
 
 @Injectable()
@@ -64,6 +65,7 @@ export class ClubService {
         'clubCode',
         'charterDate',
         'socialLinks',
+        'meetingMode',
       ],
     });
     if (!club) {
@@ -116,7 +118,12 @@ export class ClubService {
   async getAllClubs(
     page: number,
     limit: number,
-    filters?: { district?: string; area?: string; division?: string },
+    filters?: {
+      district?: string;
+      area?: string;
+      division?: string;
+      meetingMode?: ClubMeetingMode;
+    },
   ): Promise<Club[]> {
     const where: Record<string, string> = {};
     if (filters?.district) {
@@ -127,6 +134,9 @@ export class ClubService {
     }
     if (filters?.division) {
       where.division = filters.division;
+    }
+    if (filters?.meetingMode) {
+      where.meetingMode = filters.meetingMode;
     }
 
     const clubs = await this.clubRepo.find({
@@ -193,7 +203,15 @@ export class ClubService {
   async findClubByCode(clubCode: string): Promise<Club> {
     const club = await this.clubRepo.findOne({
       where: { clubCode },
-      select: ['id', 'name', 'description', 'district', 'area', 'division'],
+      select: [
+        'id',
+        'name',
+        'description',
+        'district',
+        'area',
+        'division',
+        'meetingMode',
+      ],
     });
 
     if (!club) {
@@ -207,9 +225,10 @@ export class ClubService {
     districts: string[];
     divisions: string[];
     areas: string[];
+    meetingModes: ClubMeetingMode[];
   }> {
     const clubs = await this.clubRepo.find({
-      select: ['district', 'division', 'area'],
+      select: ['district', 'division', 'area', 'meetingMode'],
     });
 
     const collect = (key: 'district' | 'division' | 'area') =>
@@ -225,6 +244,7 @@ export class ClubService {
       districts: collect('district'),
       divisions: collect('division'),
       areas: collect('area'),
+      meetingModes: Object.values(ClubMeetingMode),
     };
   }
 }

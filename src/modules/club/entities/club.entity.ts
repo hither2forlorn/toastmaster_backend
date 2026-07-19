@@ -2,6 +2,7 @@ import { BaseEntity } from 'src/common/entities/base.entity';
 import { User } from 'src/modules/user/entities/user.entity';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { ClubMeetingFrequency } from '../enum/club-meeting-frequency.enum';
+import { ClubMeetingMode } from '../enum/club-meeting-mode.enum';
 import { ClubMember } from './club-member.entity';
 import { AgendaTemplate } from 'src/modules/agenda-template/entity/agenda-template.entity';
 
@@ -35,6 +36,13 @@ export class Club extends BaseEntity {
     name: 'meeting_frequency',
   })
   meetingFrequency: ClubMeetingFrequency;
+
+  @Column({
+    enum: ClubMeetingMode,
+    default: ClubMeetingMode.OFFLINE,
+    name: 'meeting_mode',
+  })
+  meetingMode: ClubMeetingMode;
 
   @Column({ name: 'club_code', unique: true, length: 20, select: false })
   clubCode: string;

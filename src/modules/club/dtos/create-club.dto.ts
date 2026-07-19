@@ -12,6 +12,7 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ClubMeetingFrequency } from '../enum/club-meeting-frequency.enum';
+import { ClubMeetingMode } from '../enum/club-meeting-mode.enum';
 
 export class CreateClubDto {
   @ApiProperty({
@@ -72,6 +73,15 @@ export class CreateClubDto {
   @IsEnum(ClubMeetingFrequency)
   @IsOptional()
   meetingFrequency?: ClubMeetingFrequency;
+
+  @ApiPropertyOptional({
+    description: 'Club meeting mode (online, offline, or hybrid)',
+    enum: ClubMeetingMode,
+    example: ClubMeetingMode.OFFLINE,
+  })
+  @IsEnum(ClubMeetingMode)
+  @IsOptional()
+  meetingMode?: ClubMeetingMode;
 
   @ApiPropertyOptional({
     description: 'Charter date of the club',

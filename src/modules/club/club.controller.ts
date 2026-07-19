@@ -21,6 +21,7 @@ import { ClubMemberService } from './club-member.service';
 import { AddToClubDto, JoinClubByCodeDto } from './dtos/club-join.dto';
 import { MembershipGuard } from 'src/common/guards/membership.guard';
 import { ClubRole } from './enum/club-role.enum';
+import { ClubMeetingMode } from './enum/club-meeting-mode.enum';
 import {
   GetMemberRoleDto,
   UpdateMemberRoleDto,
@@ -62,11 +63,13 @@ export class ClubController {
     @Query('district') district?: string,
     @Query('area') area?: string,
     @Query('division') division?: string,
+    @Query('meetingMode') meetingMode?: ClubMeetingMode,
   ) {
     return this.clubService.getAllClubs(page, limit, {
       district,
       area,
       division,
+      meetingMode,
     });
   }
 
@@ -213,10 +216,7 @@ export class ClubController {
 
   @UseGuards(MembershipGuard)
   @Get('/:clubId/members/pending')
-  getPendingClubMembers(
-    @Param('clubId') clubId: string,
-    @Req() req,
-  ) {
+  getPendingClubMembers(@Param('clubId') clubId: string, @Req() req) {
     if (req.clubRole !== ClubRole.OWNER && req.clubRole !== ClubRole.ADMIN) {
       throw new UnauthorizedException(
         'You are not authorized to view pending members',
