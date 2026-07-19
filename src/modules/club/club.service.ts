@@ -202,4 +202,29 @@ export class ClubService {
 
     return club;
   }
+
+  async getFilterOptions(): Promise<{
+    districts: string[];
+    divisions: string[];
+    areas: string[];
+  }> {
+    const clubs = await this.clubRepo.find({
+      select: ['district', 'division', 'area'],
+    });
+
+    const collect = (key: 'district' | 'division' | 'area') =>
+      Array.from(
+        new Set(
+          clubs
+            .map((club) => club[key])
+            .filter((value): value is string => !!value),
+        ),
+      ).sort();
+
+    return {
+      districts: collect('district'),
+      divisions: collect('division'),
+      areas: collect('area'),
+    };
+  }
 }

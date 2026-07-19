@@ -50,6 +50,11 @@ export class ClubController {
     return this.clubService.getUserClubs(userId);
   }
 
+  @Get('/all/filters')
+  getFilterOptions() {
+    return this.clubService.getFilterOptions();
+  }
+
   @Get('/all/list')
   getAllClubs(
     @Query('page', ParseIntPipe) page: number,
