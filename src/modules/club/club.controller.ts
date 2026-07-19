@@ -50,12 +50,24 @@ export class ClubController {
     return this.clubService.getUserClubs(userId);
   }
 
+  @Get('/all/filters')
+  getFilterOptions() {
+    return this.clubService.getFilterOptions();
+  }
+
   @Get('/all/list')
   getAllClubs(
     @Query('page', ParseIntPipe) page: number,
     @Query('limit', ParseIntPipe) limit: number,
+    @Query('district') district?: string,
+    @Query('area') area?: string,
+    @Query('division') division?: string,
   ) {
-    return this.clubService.getAllClubs(page, limit);
+    return this.clubService.getAllClubs(page, limit, {
+      district,
+      area,
+      division,
+    });
   }
 
   @UseGuards(MembershipGuard)
