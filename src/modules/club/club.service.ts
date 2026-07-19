@@ -113,9 +113,24 @@ export class ClubService {
     return { message: 'Club deleted successfully' };
   }
 
-  // search filter: todo
-  async getAllClubs(page: number, limit: number): Promise<Club[]> {
+  async getAllClubs(
+    page: number,
+    limit: number,
+    filters?: { district?: string; area?: string; division?: string },
+  ): Promise<Club[]> {
+    const where: Record<string, string> = {};
+    if (filters?.district) {
+      where.district = filters.district;
+    }
+    if (filters?.area) {
+      where.area = filters.area;
+    }
+    if (filters?.division) {
+      where.division = filters.division;
+    }
+
     const clubs = await this.clubRepo.find({
+      where,
       skip: (page - 1) * limit,
       take: limit,
       relations: ['owner'],
