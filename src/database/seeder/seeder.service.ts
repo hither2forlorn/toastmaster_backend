@@ -7,47 +7,135 @@ import { Club } from 'src/modules/club/entities/club.entity';
 import { ClubMember } from 'src/modules/club/entities/club-member.entity';
 import { Meeting } from 'src/modules/meeting/entities/meeting.entity';
 import { Agenda } from 'src/modules/agenda/entities/agenda.entity';
-import { AgendaReport, ReportType } from 'src/modules/agenda-report/entities/agenda-report.entity';
+import {
+  AgendaReport,
+  ReportType,
+} from 'src/modules/agenda-report/entities/agenda-report.entity';
 import { ClubMeetingFrequency } from 'src/modules/club/enum/club-meeting-frequency.enum';
+import { ClubMeetingMode } from 'src/modules/club/enum/club-meeting-mode.enum';
 import { Role } from 'src/modules/role/entities/role.entity';
 import { RoleKey } from 'src/modules/role/enum/role-key.enum';
 import { MEETING_STATUS } from 'src/modules/meeting/enum/meeting-status.enum';
 import { MembershipStatus } from 'src/modules/club/enum/club-members.enum';
 
 const FIRST_NAMES = [
-  'Ram', 'Sita', 'Hari', 'Gita', 'Arjun', 'Maya', 'Bikram', 'Nisha',
-  'Rajesh', 'Sunita', 'Deepak', 'Anita', 'Kiran', 'Sarita', 'Bishal',
-  'Pooja', 'Aakash', 'Rina', 'Suresh', 'Laxmi', 'Bibek', 'Samikshya',
-  'Rohit', 'Aasha', 'Manoj', 'Priya', 'Sandeep', 'Binita', 'Anil', 'Kamala',
+  'Ram',
+  'Sita',
+  'Hari',
+  'Gita',
+  'Arjun',
+  'Maya',
+  'Bikram',
+  'Nisha',
+  'Rajesh',
+  'Sunita',
+  'Deepak',
+  'Anita',
+  'Kiran',
+  'Sarita',
+  'Bishal',
+  'Pooja',
+  'Aakash',
+  'Rina',
+  'Suresh',
+  'Laxmi',
+  'Bibek',
+  'Samikshya',
+  'Rohit',
+  'Aasha',
+  'Manoj',
+  'Priya',
+  'Sandeep',
+  'Binita',
+  'Anil',
+  'Kamala',
 ];
 const LAST_NAMES = [
-  'Sharma', 'Thapa', 'Gurung', 'Tamang', 'Rai', 'Limbu', 'Shrestha',
-  'Pradhan', 'Karki', 'Bista', 'Magar', 'Newar', 'Adhikari', 'Pokharel',
-  'Khadka', 'Poudel', 'Basnet', 'Acharya', 'Dahal', 'Giri',
+  'Sharma',
+  'Thapa',
+  'Gurung',
+  'Tamang',
+  'Rai',
+  'Limbu',
+  'Shrestha',
+  'Pradhan',
+  'Karki',
+  'Bista',
+  'Magar',
+  'Newar',
+  'Adhikari',
+  'Pokharel',
+  'Khadka',
+  'Poudel',
+  'Basnet',
+  'Acharya',
+  'Dahal',
+  'Giri',
 ];
 const CLUB_NAMES = [
-  'Himalayan Speakers', 'Everest Orators', 'Pokhara Leaders',
-  'Chitwan Communicators', 'Lumbini Toastmasters', 'Gorkhali Club',
-  'Newari Narrators', 'Terai Talkers', 'Annapurna Achievers',
-  'Bagmati Voices', 'Gandaki Guild', 'Karnali Club',
+  'Himalayan Speakers',
+  'Everest Orators',
+  'Pokhara Leaders',
+  'Chitwan Communicators',
+  'Lumbini Toastmasters',
+  'Gorkhali Club',
+  'Newari Narrators',
+  'Terai Talkers',
+  'Annapurna Achievers',
+  'Bagmati Voices',
+  'Gandaki Guild',
+  'Karnali Club',
 ];
 const VENUES = [
-  'Community Hall', 'Hotel Summit', 'City Library', 'Rotary Hall',
-  'Conference Center', 'Club House', 'Town Hall',
+  'Community Hall',
+  'Hotel Summit',
+  'City Library',
+  'Rotary Hall',
+  'Conference Center',
+  'Club House',
+  'Town Hall',
 ];
 const THEMES = [
-  'Leadership', 'Confidence', 'Storytelling', 'Innovation', 'Teamwork',
-  'Courage', 'Creativity', 'Resilience', 'Vision', 'Integrity',
-  'Excellence', 'Empathy', 'Motivation', 'Adaptability',
+  'Leadership',
+  'Confidence',
+  'Storytelling',
+  'Innovation',
+  'Teamwork',
+  'Courage',
+  'Creativity',
+  'Resilience',
+  'Vision',
+  'Integrity',
+  'Excellence',
+  'Empathy',
+  'Motivation',
+  'Adaptability',
 ];
 const ROLES = [
-  'Toastmaster of the Evening', 'Speaker', 'Evaluator', 'Timer',
-  'General Evaluator', 'Table Topics Master', 'Grammarian', 'Ah Counter',
-  'Warmup Master', 'Ballot Counter', 'Toastmaster', 'Invocator',
+  'Toastmaster of the Evening',
+  'Speaker',
+  'Evaluator',
+  'Timer',
+  'General Evaluator',
+  'Table Topics Master',
+  'Grammarian',
+  'Ah Counter',
+  'Warmup Master',
+  'Ballot Counter',
+  'Toastmaster',
+  'Invocator',
 ];
 const WORDS_OF_DAY = [
-  'Resilience', 'Courage', 'Empathy', 'Vision', 'Integrity',
-  'Innovation', 'Grit', 'Mindfulness', 'Synergy', 'Gratitude',
+  'Resilience',
+  'Courage',
+  'Empathy',
+  'Vision',
+  'Integrity',
+  'Innovation',
+  'Grit',
+  'Mindfulness',
+  'Synergy',
+  'Gratitude',
 ];
 const GRAMMAR_NOTES = [
   'Overall excellent grammar usage by all speakers',
@@ -190,9 +278,13 @@ export class SeederService {
       division: 'Division A',
       ownerId: userOne.id,
       meetingFrequency: ClubMeetingFrequency.WEEKLY,
+      meetingMode: ClubMeetingMode.OFFLINE,
       clubCode: 'KTM-TM-001',
       charterDate: new Date('2018-05-12'),
-      socialLinks: ['https://facebook.com/kathmandu-tm', 'https://kathmandutm.org'],
+      socialLinks: [
+        'https://facebook.com/kathmandu-tm',
+        'https://kathmandutm.org',
+      ],
     });
 
     const clubPatan = this.clubRepository.create({
@@ -204,6 +296,7 @@ export class SeederService {
       division: 'Division B',
       ownerId: userOne.id,
       meetingFrequency: ClubMeetingFrequency.BIWEEKLY,
+      meetingMode: ClubMeetingMode.ONLINE,
       clubCode: 'PTN-ADV-002',
       charterDate: new Date('2019-09-01'),
       socialLinks: ['https://patanadvanced.org'],
@@ -219,6 +312,7 @@ export class SeederService {
       division: 'Division A',
       ownerId: userTwo.id,
       meetingFrequency: ClubMeetingFrequency.WEEKLY,
+      meetingMode: ClubMeetingMode.HYBRID,
       clubCode: 'BKT-EVE-003',
       charterDate: new Date('2020-02-20'),
       socialLinks: ['https://bhaktapurtm.org', 'https://instagram.com/bkt-tm'],
@@ -241,18 +335,37 @@ export class SeederService {
             ClubMeetingFrequency.BIWEEKLY,
             ClubMeetingFrequency.MONTHLY,
           ]),
+          meetingMode: pick([
+            ClubMeetingMode.ONLINE,
+            ClubMeetingMode.OFFLINE,
+            ClubMeetingMode.HYBRID,
+          ]),
           clubCode: `SEED-${String(i + 1).padStart(3, '0')}`,
-          charterDate: new Date(2015 + randInt(0, 10), randInt(0, 11), randInt(1, 28)),
+          charterDate: new Date(
+            2015 + randInt(0, 10),
+            randInt(0, 11),
+            randInt(1, 28),
+          ),
           socialLinks: pick([
-            [`https://facebook.com/${CLUB_NAMES[i].replace(/\s+/g, '-').toLowerCase()}`],
-            [`https://${CLUB_NAMES[i].replace(/\s+/g, '').toLowerCase()}.org`, `https://instagram.com/${CLUB_NAMES[i].replace(/\s+/g, '').toLowerCase()}`],
+            [
+              `https://facebook.com/${CLUB_NAMES[i].replace(/\s+/g, '-').toLowerCase()}`,
+            ],
+            [
+              `https://${CLUB_NAMES[i].replace(/\s+/g, '').toLowerCase()}.org`,
+              `https://instagram.com/${CLUB_NAMES[i].replace(/\s+/g, '').toLowerCase()}`,
+            ],
             null,
           ]),
         }),
       );
     }
 
-    const allClubs = [clubKathmandu, clubPatan, clubBhaktapur, ...generatedClubs];
+    const allClubs = [
+      clubKathmandu,
+      clubPatan,
+      clubBhaktapur,
+      ...generatedClubs,
+    ];
     await this.clubRepository.save(allClubs);
     console.log(`✅ Clubs created (${allClubs.length})`);
 
@@ -490,7 +603,9 @@ export class SeederService {
           notes: isCompleted
             ? 'Successfully conducted meeting with engaging sessions'
             : 'Upcoming meeting - preparations in progress',
-          status: isCompleted ? MEETING_STATUS.COMPLETED : MEETING_STATUS.SCHEDULED,
+          status: isCompleted
+            ? MEETING_STATUS.COMPLETED
+            : MEETING_STATUS.SCHEDULED,
           clubId: club.id,
         };
         meetings.push(meeting);
@@ -638,7 +753,12 @@ export class SeederService {
             `used the word of the day naturally in a story`,
             `strong contextual usage`,
           ],
-          grammarIssues: pick(['None', 'Minor: tense shift', 'Used filler word', 'Good article use']),
+          grammarIssues: pick([
+            'None',
+            'Minor: tense shift',
+            'Used filler word',
+            'Good article use',
+          ]),
         }));
         reports.push({
           id: randomUUID(),
