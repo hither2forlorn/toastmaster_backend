@@ -70,7 +70,9 @@ export class AgendaService {
 
     // The user exists but is not yet a member of this club. Auto-add them to
     // the club so they can be assigned, then treat them as a club member.
-    if (!membership.member && data.toastmasterId) {
+    // Skip this when the user is already the club owner (no club_members row
+    // exists for owners, but they are implicitly authorized).
+    if (!membership.member && !membership.isOwner && data.toastmasterId) {
       await this.memberService.addMemberToClub(clubId, {
         userId: data.memberId,
       });
